@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+
+<!-- ##########################################################
+     SETTINGS: paste your Supabase URL and public key below.
+     Everything else in this file can stay as it is.
+     ########################################################## -->
+<script>
+/* =====================================================
+   SETTINGS: the ONLY part of this file you need to edit.
+
+   1. SUPABASE_URL      -> your Project URL
+   2. SUPABASE_ANON_KEY -> your PUBLIC key
+                           ("anon public" key, or "Publishable key"
+                            on newer Supabase dashboards)
+
+   Safe to be here (public by design):
+     - Project URL
+     - anon / publishable key
+   NEVER paste here, never share, never upload to GitHub:
+     - service_role key  (also called "secret key")
+     - your database password
+   The public key is safe because Row Level Security (the SQL you
+   run in Supabase) blocks everything except reading published notes.
+   Only your admin account can change anything.
+   ===================================================== */
+window.MH_CONFIG = {
+  SUPABASE_URL: 'https://tsuyxkzadddwwzjaxuyp.supabase.co',        // e.g. https://abcdxyz.supabase.co
+  SUPABASE_ANON_KEY: 'sb_publishable_HBLZVPhnxuCzofgjAL4hSg_TSqotIuE', // the long public key
+
+  BUCKET: 'notes',                       // storage bucket name (do not change)
+
+  // Used on the About and Contact pages. Change to your real details.
+  OWNER_NAME: 'Harshit Kumrawat',
+  CONTACT_EMAIL: 'harshitkumrawat42938@gmail.com',
+
+  // "Coming soon" cards in the branch slider. A card disappears by itself
+  // once you add a branch with the same name in the Admin Portal.
+  COMING_SOON: [
+    { name: 'IT',     icon: '🌐' },
+    { name: 'AI/ML',  icon: '🤖' },
+    { name: 'ECE',    icon: '📡' },
+    { name: 'EE',     icon: '⚡' },
+    { name: 'ME',     icon: '⚙️' },
+    { name: 'Civil',  icon: '🏗️' }
+  ]
+};
+
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- ============ SEO ============ -->
+<title>Mentor Harry for Engineering | Free Engineering Notes by Branch, Semester &amp; Unit</title>
+<meta name="description" content="Mentor Harry for Engineering is a free notes hub. Pick your branch, semester, subject and unit, then view or download PDF notes, important questions and PYQs.">
+<meta name="theme-color" content="#0B1026">
+<!-- TODO (after deploy): replace with your real site address -->
+<link rel="canonical" href="https://mentorharry.com/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mentor Harry for Engineering">
+<meta property="og:description" content="Free unit-wise engineering notes, important questions and PYQs.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%93%3C/text%3E%3C/svg%3E">
+
+<!-- Apply saved theme before the page paints (prevents a flash) -->
+<script>
+  try {
+    var t = localStorage.getItem('mh_theme');
+    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+</script>
+
+<!-- ============ FONTS ============ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* =====================================================
+   MENTOR HARRY FOR ENGINEERING — styles
+   Sections: 1 Theme  2 Base  3 Nav  4 Hero  5 Sections
+             6 Branch slider  7 Pages  8 Units  9 Forms
+             10 Modal/Toast  11 Responsive
+   ===================================================== */
+
+/* ---------- 1. THEME (colours live here, change them here) ---------- */
+:root {
+  --bg: #0B1026;
+  --bg-2: #111a3d;
+  --text: #F4F4F8;
+  --muted: #A3ABCB;
+  --violet: #7C3AED;
+  --violet-text: #A78BFA;   /* lighter violet for small text on dark */
+  --cyan: #22D3EE;
+  --amber: #F59E0B;
+  --glass: rgba(255, 255, 255, 0.06);
+  --glass-strong: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.13);
+  --nav-bg: rgba(11, 16, 38, 0.7);
+  --grad-text: linear-gradient(120deg, #ffffff, #A78BFA 55%, #22D3EE);
+  --shadow: 0 15px 50px rgba(124, 58, 237, 0.18);
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --radius: 18px;
+}
+
+[data-theme="light"] {
+  --bg: #F5F6FC;
+  --bg-2: #E9ECFA;
+  --text: #0B1026;
+  --muted: #4B5578;
+  --violet-text: #6D28D9;
+  --glass: rgba(255, 255, 255, 0.75);
+  --glass-strong: rgba(255, 255, 255, 0.95);
+  --border: rgba(11, 16, 38, 0.12);
+  --nav-bg: rgba(245, 246, 252, 0.8);
+  --grad-text: linear-gradient(120deg, #4C1D95, #7C3AED 55%, #0891B2);
+  --shadow: 0 15px 40px rgba(124, 58, 237, 0.14);
+}
+
+/* ---------- 2. BASE ---------- */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html { background: var(--bg); }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  overflow-x: hidden;
+  transition: background 0.3s, color 0.3s;
+}
+::selection { background: var(--violet); color: #fff; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; border-radius: 6px; }
+code { background: var(--glass-strong); padding: 1px 6px; border-radius: 6px; font-size: 0.9em; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+.skip-link {
+  position: fixed; top: -60px; left: 12px; z-index: 300;
+  background: var(--violet); color: #fff; padding: 10px 16px; border-radius: 10px;
+}
+.skip-link:focus { top: 12px; }
+
+/* Lenis (smooth scroll) recommended rules */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+.container { width: min(1120px, 100% - 2rem); margin-inline: auto; }
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: var(--radius);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 11px 20px; border-radius: 50px; border: 1px solid transparent;
+  background: linear-gradient(120deg, var(--violet), #5b21b6);
+  color: #fff; font-weight: 600; font-size: 14px; transition: 0.25s;
+}
+.btn:hover { box-shadow: 0 0 28px rgba(124, 58, 237, 0.55); transform: translateY(-1px); }
+.btn-sm { padding: 7px 14px; font-size: 13px; }
+.btn-ghost { background: transparent; border-color: var(--border); color: var(--text); }
+.btn-ghost:hover { border-color: var(--cyan); box-shadow: 0 0 20px rgba(34, 211, 238, 0.25); }
+.btn[disabled] { opacity: 0.6; cursor: wait; }
+
+.chip { display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 12px; border: 1px solid var(--border); }
+.chip-soon { color: var(--amber); border-color: rgba(245, 158, 11, 0.45); }
+
+/* Skeleton loader */
+.skeleton {
+  background: linear-gradient(100deg, var(--glass) 30%, var(--glass-strong) 50%, var(--glass) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+.demo-banner {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 150; text-align: center;
+  padding: 10px 16px; font-size: 13px; background: var(--amber); color: #1a1200;
+}
+.demo-banner code { background: rgba(0, 0, 0, 0.12); }
+
+/* ---------- 3. NAV ---------- */
+.nav {
+  position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+  background: linear-gradient(to bottom, var(--nav-bg), transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.nav-inner { display: flex; justify-content: space-between; align-items: center; padding: 20px 7%; }
+.logo { font-family: var(--font-display); font-weight: 800; letter-spacing: 3px; font-size: 15px; }
+.logo span { color: var(--amber); }
+.nav-right { display: flex; align-items: center; gap: 14px; }
+.nav-links { display: flex; gap: 26px; align-items: center; }
+.nav-link { color: var(--muted); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; transition: color 0.2s; }
+.nav-link:hover, .nav-link.active { color: var(--text); }
+.badge {
+  display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 50px;
+  background: var(--amber); color: #1a1200; font-size: 11px; text-align: center; letter-spacing: 0;
+}
+.icon-btn {
+  width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; border: 1px solid var(--border); background: var(--glass); font-size: 16px; transition: 0.2s;
+}
+.icon-btn:hover { border-color: var(--cyan); }
+.menu-btn { display: none; }
+
+/* ---------- 4. HERO ---------- */
+.hero {
+  min-height: 100vh; position: relative; display: flex; justify-content: center; align-items: center;
+  text-align: center; overflow: hidden; padding: 120px 1.25rem 80px;
+}
+.hero-bg { position: absolute; inset: 0; z-index: 0; }
+.grid-bg {
+  position: absolute; inset: 0; opacity: 0.35;
+  background-image:
+    linear-gradient(rgba(124, 58, 237, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.22) 1px, transparent 1px);
+  background-size: 65px 65px;
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+  mask-image: linear-gradient(to bottom, #000, transparent);
+}
+.orb-wrap { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.orb {
+  position: relative; width: 380px; height: 380px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, #c4b5fd, #7C3AED 25%, #241050 55%, transparent 72%);
+  filter: blur(2px); opacity: 0.75; box-shadow: 0 0 100px rgba(124, 58, 237, 0.35);
+}
+.orb::before, .orb::after { content: ""; position: absolute; border-radius: 50%; }
+.orb::before { inset: -35px; border: 1px solid rgba(167, 139, 250, 0.45); transform: rotateX(70deg) rotateZ(-20deg); }
+.orb::after { inset: -65px; border: 1px solid rgba(34, 211, 238, 0.3); transform: rotateY(65deg) rotateZ(25deg); }
+[data-theme="light"] .orb { opacity: 0.45; }
+
+.hero-content { position: relative; z-index: 5; width: min(760px, 100%); }
+.eyebrow { color: var(--violet-text); letter-spacing: 5px; font-size: 11px; margin-bottom: 24px; }
+.hero h1 {
+  font-family: var(--font-display); font-weight: 800;
+  font-size: clamp(40px, 9vw, 104px); line-height: 1.08; letter-spacing: -3px;
+  background: var(--grad-text); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hero h1 small {
+  display: block; margin-top: 10px; font-size: clamp(14px, 2.4vw, 24px); letter-spacing: 8px; font-weight: 600;
+  text-transform: uppercase; color: var(--amber); -webkit-text-fill-color: var(--amber);
+}
+.hero p { margin: 26px auto 22px; max-width: 520px; color: var(--muted); font-size: 15px; line-height: 1.8; }
+
+.search { position: relative; max-width: 540px; margin: 0 auto; }
+.search input {
+  width: 100%; padding: 16px 56px 16px 22px; border-radius: 50px; font: inherit; font-size: 15px;
+  color: var(--text); background: var(--glass-strong); border: 1px solid var(--border);
+  backdrop-filter: blur(12px); transition: 0.2s;
+}
+.search input::placeholder { color: var(--muted); }
+.search input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.15); }
+.search button {
+  position: absolute; right: 6px; top: 6px; width: 44px; height: 44px; border-radius: 50%; border: 0;
+  background: linear-gradient(120deg, var(--violet), var(--cyan)); color: #fff; font-size: 20px;
+}
+.search-results {
+  position: absolute; top: calc(100% + 8px); left: 0; right: 0; max-height: 320px; overflow-y: auto; text-align: left;
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 16px; padding: 8px; z-index: 20;
+  box-shadow: var(--shadow);
+}
+.search-results a { display: block; padding: 10px 14px; border-radius: 10px; }
+.search-results a:hover, .search-results a:focus { background: var(--glass-strong); }
+.search-results b { display: block; font-weight: 600; font-size: 14px; }
+.search-results small { color: var(--muted); font-size: 12px; }
+.search-results .none { padding: 12px 14px; color: var(--muted); font-size: 14px; }
+
+.cta {
+  display: inline-block; margin-top: 28px; padding: 15px 34px; border: 1px solid var(--violet);
+  border-radius: 50px; letter-spacing: 2px; font-size: 12px; transition: 0.3s;
+}
+.cta:hover { background: var(--violet); color: #fff; box-shadow: 0 0 35px rgba(124, 58, 237, 0.55); }
+.cta-alt { border-color: var(--cyan); }
+.cta-alt:hover { background: var(--cyan); color: #04202a; box-shadow: 0 0 35px rgba(34, 211, 238, 0.45); }
+.cta-row { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+
+/* ---------- 5. HOME SECTIONS ---------- */
+.section { padding: 120px 0; position: relative; }
+.section-label { color: var(--violet-text); letter-spacing: 5px; font-size: 11px; margin-bottom: 22px; }
+.section-title { font-family: var(--font-display); font-size: clamp(30px, 5.5vw, 66px); line-height: 1.2; max-width: 900px; }
+.description { color: var(--muted); max-width: 560px; line-height: 1.9; margin-top: 26px; }
+
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 64px; }
+.card { padding: 38px 30px; min-height: 240px; transition: 0.4s; }
+.card:hover { border-color: var(--violet-text); transform: translateY(-12px); box-shadow: var(--shadow); }
+.card span { font-size: 34px; color: var(--cyan); }
+.card h3 { margin: 22px 0 12px; font-family: var(--font-display); font-size: 16px; }
+.card p { color: var(--muted); font-size: 14px; line-height: 1.8; }
+
+.immersive {
+  display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center;
+  min-height: 100vh; overflow: hidden; padding-inline: 1.25rem;
+  background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.28), transparent 65%);
+}
+.immersive .description { margin-inline: auto; }
+.zoom-text {
+  font-family: var(--font-display); font-weight: 800; font-size: clamp(40px, 9vw, 110px); line-height: 1.1;
+  background: var(--grad-text); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.immersive .cta-row { margin-top: 10px; }
+
+.footer { text-align: center; padding: 50px 1rem 70px; color: var(--muted); font-size: 12px; letter-spacing: 3px; }
+.footer-links { margin-top: 12px; letter-spacing: 1px; }
+.footer-links a:hover { color: var(--cyan); }
+
+/* ---------- 6. BRANCH SLIDER ---------- */
+.slider-wrap { position: relative; margin-top: 56px; }
+.slider {
+  display: flex; gap: 22px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 14px 6px 34px;
+  scrollbar-width: none; scroll-behavior: smooth;
+}
+.slider::-webkit-scrollbar { display: none; }
+.branch-card {
+  flex: 0 0 260px; min-height: 250px; padding: 30px 26px; scroll-snap-align: start;
+  display: flex; flex-direction: column; transition: 0.35s;
+}
+a.branch-card:hover { transform: translateY(-10px); border-color: var(--cyan); box-shadow: 0 15px 50px rgba(34, 211, 238, 0.18); }
+.branch-icon { font-size: 40px; line-height: 1; }
+.branch-card h3 { font-family: var(--font-display); font-size: 22px; margin: 22px 0 6px; }
+.branch-card p { color: var(--muted); font-size: 13px; flex: 1; }
+.branch-meta { margin-top: 16px; color: var(--cyan); font-size: 13px; font-weight: 600; }
+.branch-card.is-soon { opacity: 0.55; border-style: dashed; }
+.branch-card.is-soon .branch-meta { color: var(--amber); }
+.slider-btn {
+  position: absolute; top: 45%; z-index: 5; width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--bg-2); font-size: 24px; line-height: 1; transition: 0.2s;
+}
+.slider-btn:hover { border-color: var(--cyan); }
+.slider-btn.prev { left: -14px; }
+.slider-btn.next { right: -14px; }
+
+/* ---------- 7. PAGES ---------- */
+.page { padding: 130px 0 90px; min-height: 80vh; }
+.crumbs { display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; color: var(--muted); margin-bottom: 26px; }
+.crumbs a:hover { color: var(--cyan); }
+.page-head { display: flex; align-items: center; gap: 20px; margin-bottom: 36px; flex-wrap: wrap; }
+.page-head .branch-icon { font-size: 54px; }
+.page h1 { font-family: var(--font-display); font-size: clamp(28px, 5vw, 52px); line-height: 1.15; }
+.page-sub { color: var(--muted); max-width: 640px; margin-top: 8px; }
+.prose { max-width: 720px; }
+.prose p { color: var(--muted); margin-top: 18px; line-height: 1.9; }
+.prose h2 { font-family: var(--font-display); font-size: 20px; margin-top: 34px; }
+
+.tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 30px; scrollbar-width: thin; }
+.tab {
+  flex: 0 0 auto; padding: 10px 20px; border-radius: 50px; border: 1px solid var(--border);
+  background: var(--glass); font-size: 14px; font-weight: 500; transition: 0.2s;
+}
+.tab:hover { border-color: var(--violet-text); }
+.tab[aria-selected="true"] { background: linear-gradient(120deg, var(--violet), #5b21b6); color: #fff; border-color: transparent; box-shadow: 0 0 24px rgba(124, 58, 237, 0.45); }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 22px; }
+.subject-card { padding: 28px 26px; display: flex; flex-direction: column; gap: 8px; transition: 0.3s; }
+.subject-card:hover { transform: translateY(-8px); border-color: var(--violet-text); box-shadow: var(--shadow); }
+.subject-card h3 { font-family: var(--font-display); font-size: 17px; line-height: 1.35; }
+.subject-card p { color: var(--muted); font-size: 13px; flex: 1; }
+.subject-card .meta { color: var(--cyan); font-size: 13px; font-weight: 600; margin-top: 6px; }
+.code { color: var(--amber); font-size: 12px; letter-spacing: 2px; }
+
+.empty { padding: 50px 24px; text-align: center; color: var(--muted); }
+.empty b { display: block; color: var(--text); font-size: 18px; margin-bottom: 6px; }
+
+/* ---------- 8. UNITS (accordion) ---------- */
+.units { display: flex; flex-direction: column; gap: 14px; }
+.unit { overflow: hidden; transition: border-color 0.3s; }
+.unit.open { border-color: var(--violet-text); }
+.unit-row { display: flex; align-items: center; }
+.unit-toggle {
+  flex: 1; display: flex; align-items: center; gap: 18px; text-align: left; padding: 20px 22px;
+  background: none; border: 0;
+}
+.unit-num {
+  flex: 0 0 auto; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center;
+  font-family: var(--font-display); font-weight: 800; color: var(--cyan);
+  background: rgba(34, 211, 238, 0.1); border: 1px solid rgba(34, 211, 238, 0.3);
+}
+.unit-title { font-weight: 600; font-size: 17px; line-height: 1.35; }
+.unit-caret { margin-left: auto; transition: transform 0.3s; color: var(--muted); }
+.unit.open .unit-caret { transform: rotate(180deg); }
+.bm-btn { margin-right: 16px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: transparent; font-size: 18px; color: var(--muted); transition: 0.2s; }
+.bm-btn:hover { border-color: var(--amber); color: var(--amber); }
+.bm-btn[aria-pressed="true"] { color: var(--amber); border-color: var(--amber); background: rgba(245, 158, 11, 0.12); }
+
+.unit-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.35s ease, visibility 0.35s; visibility: hidden; }
+.unit.open .unit-body { grid-template-rows: 1fr; visibility: visible; }
+.unit-body-inner { overflow: hidden; }
+.unit-content { padding: 0 22px 24px 86px; }
+.unit-content p { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+.docs { display: flex; flex-wrap: wrap; gap: 14px; }
+.doc { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--glass); }
+.doc-label { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+.doc-primary { border-color: rgba(124, 58, 237, 0.5); }
+
+.bm-item { display: flex; align-items: center; gap: 16px; padding: 18px 22px; flex-wrap: wrap; }
+.bm-item .grow { flex: 1; min-width: 200px; }
+.bm-item h3 { font-size: 16px; }
+.bm-item small { color: var(--muted); }
+
+/* ---------- 9. FORMS ---------- */
+.form { display: grid; gap: 18px; max-width: 640px; padding: 30px; }
+.form .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.field label { display: block; font-size: 13px; margin-bottom: 6px; color: var(--muted); }
+.field input, .field textarea {
+  width: 100%; padding: 13px 16px; border-radius: 12px; font: inherit; font-size: 14px; color: var(--text);
+  background: var(--glass-strong); border: 1px solid var(--border);
+}
+.field textarea { min-height: 130px; resize: vertical; }
+.field input:focus, .field textarea:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.14); }
+.hp { position: absolute; left: -9999px; height: 0; overflow: hidden; }
+.form-note { font-size: 12px; color: var(--muted); }
+.contact-list { display: grid; gap: 14px; margin-top: 26px; max-width: 520px; }
+.contact-list a { padding: 18px 22px; display: block; transition: 0.25s; }
+.contact-list a:hover { border-color: var(--cyan); transform: translateX(6px); }
+
+/* ---------- 10. MODAL + TOAST ---------- */
+.modal { position: fixed; inset: 0; z-index: 200; background: rgba(4, 7, 20, 0.78); display: grid; place-items: center; padding: 16px; }
+.modal-box { width: min(1000px, 100%); height: min(90vh, 900px); display: flex; flex-direction: column; padding: 16px; background: var(--bg-2); }
+.modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.modal-head h2 { font-size: 16px; font-weight: 600; }
+.modal-actions { display: flex; gap: 10px; }
+#viewer-frame { flex: 1; width: 100%; border: 0; border-radius: 12px; background: #fff; }
+.modal-note { font-size: 12px; color: var(--muted); margin-top: 10px; text-align: center; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 40px; transform: translate(-50%, 30px); opacity: 0; pointer-events: none; z-index: 400;
+  padding: 13px 22px; border-radius: 50px; background: var(--bg-2); border: 1px solid var(--cyan); font-size: 14px; max-width: 90vw;
+  transition: 0.3s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- 11. RESPONSIVE ---------- */
+@media (max-width: 820px) {
+  .nav-inner { padding: 16px 5%; }
+  .menu-btn { display: inline-flex; }
+  .nav-links {
+    position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; align-items: flex-start; gap: 4px;
+    padding: 14px 5% 22px; background: var(--bg-2); border-bottom: 1px solid var(--border); display: none;
+  }
+  .nav-links.open { display: flex; }
+  .nav-link { padding: 10px 0; font-size: 13px; }
+  .cards { grid-template-columns: 1fr; }
+  .section { padding: 90px 0; }
+  .slider-btn { display: none; }
+  .hero h1 { letter-spacing: -2px; }
+  .hero h1 small { letter-spacing: 4px; }
+  .orb { width: 240px; height: 240px; }
+  .unit-content { padding: 0 18px 22px 18px; }
+  .unit-toggle { padding: 16px; gap: 14px; }
+  .form .row { grid-template-columns: 1fr; }
+  .form { padding: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+/* ---------- 12. ADMIN PORTAL ---------- */
+.admin-bar { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 26px; }
+.admin-user { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; word-break: break-all; }
+.login { max-width: 440px; margin: 30px auto 0; padding: 34px; display: grid; gap: 16px; }
+.login form { display: grid; gap: 16px; }
+.a-err { color: #fda4af; font-size: 13px; min-height: 1.2em; }
+[data-theme="light"] .a-err { color: #be123c; }
+.hint { color: var(--muted); font-size: 12px; }
+a.hint:hover { color: var(--cyan); }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 18px; }
+.stat { padding: 24px; text-align: left; cursor: pointer; transition: 0.3s; color: var(--text); }
+.stat:hover { transform: translateY(-5px); border-color: var(--cyan); }
+.stat b { display: block; font-family: var(--font-display); font-size: 38px; color: var(--cyan); line-height: 1.1; }
+.stat span { color: var(--muted); font-size: 13px; }
+
+.atoolbar { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 22px; }
+.fsel { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+.fsel select, .field select {
+  padding: 11px 14px; border-radius: 12px; font: inherit; font-size: 14px; color: var(--text);
+  background: var(--bg-2); border: 1px solid var(--border); min-width: 160px; width: 100%;
+}
+.fsel select:focus, .field select:focus { outline: none; border-color: var(--cyan); }
+
+.arow { display: flex; align-items: center; gap: 16px; padding: 16px 20px; flex-wrap: wrap; margin-bottom: 12px; }
+.arow .grow, .aunit .grow { flex: 1; min-width: 180px; }
+.arow small, .aunit small, .asub small { color: var(--muted); }
+.arow-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-danger { background: linear-gradient(120deg, #e11d48, #9f1239); }
+.btn-danger:hover { box-shadow: 0 0 28px rgba(225, 29, 72, 0.5); }
+.btn[disabled] { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; color: var(--muted); min-width: 96px; }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.sw { width: 42px; height: 24px; border-radius: 50px; background: var(--glass-strong); border: 1px solid var(--border); position: relative; transition: 0.2s; flex: 0 0 auto; }
+.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); transition: 0.2s; }
+.switch input:checked + .sw { background: var(--violet); border-color: var(--violet); }
+.switch input:checked + .sw::after { transform: translateX(18px); background: #fff; }
+.switch input:focus-visible + .sw { outline: 2px solid var(--cyan); outline-offset: 3px; }
+
+.aunit { padding: 20px; margin-bottom: 18px; }
+.aunit-head { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.slot { padding: 14px; border: 1.5px dashed var(--border); border-radius: 14px; display: grid; gap: 8px; align-content: start; transition: 0.2s; }
+.slot.drag { border-color: var(--cyan); background: rgba(34, 211, 238, 0.08); }
+.slot.busy { opacity: 0.6; pointer-events: none; }
+.slot-label { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--violet-text); }
+.slot-file { font-size: 13px; word-break: break-all; color: var(--muted); }
+.slot-file.has { color: var(--text); }
+.slot-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.asub { padding: 20px; margin-bottom: 14px; display: grid; gap: 8px; }
+.asub-head { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.asub p { word-break: break-word; color: var(--muted); font-size: 14px; }
+.asub a { color: var(--cyan); }
+.status-pending { color: var(--amber); border-color: rgba(245, 158, 11, 0.5); }
+.status-approved { color: #34d399; border-color: rgba(52, 211, 153, 0.5); }
+.status-rejected { color: #fb7185; border-color: rgba(251, 113, 133, 0.5); }
+
+.amodal { position: fixed; inset: 0; z-index: 260; background: rgba(4, 7, 20, 0.78); display: grid; place-items: center; padding: 16px; overflow-y: auto; }
+.amodal-box { width: min(520px, 100%); padding: 26px; background: var(--bg-2); max-height: 92vh; overflow-y: auto; display: grid; gap: 14px; }
+.amodal-box h2 { font-family: var(--font-display); font-size: 18px; }
+.amodal-box form { display: grid; gap: 14px; }
+.amodal-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.field.check label { display: flex; gap: 10px; align-items: center; color: var(--text); margin: 0; font-size: 14px; }
+.field.check input { width: 18px; height: 18px; accent-color: var(--violet); }
+
+@media (max-width: 820px) {
+  .arow { padding: 14px; }
+  .fsel select { min-width: 0; }
+  .fsel { flex: 1 1 140px; }
+}
+
+</style>
+</head>
+
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- Shown only when Supabase keys are not filled in yet -->
+<div id="demo-banner" class="demo-banner" hidden>
+  Demo mode: showing sample data. Add your Supabase keys in <code>js/config.js</code> to go live.
+</div>
+
+<!-- ============ NAVBAR ============ -->
+<header class="nav">
+  <div class="nav-inner">
+    <a class="logo" href="#/" aria-label="Mentor Harry for Engineering, home">MENTOR HARRY<span>.</span></a>
+
+    <div class="nav-right">
+      <nav class="nav-links" id="nav-links" aria-label="Main">
+        <a class="nav-link" href="#/branches" data-scroll-to="#branches">Notes</a>
+        <a class="nav-link" href="#/bookmarks" data-route="bookmarks">Bookmarks <span id="bm-count" class="badge" hidden>0</span></a>
+        <a class="nav-link" href="#/contribute" data-route="contribute">Contribute</a>
+        <a class="nav-link" href="#/about" data-route="about">About</a>
+        <a class="nav-link" href="#/contact" data-route="contact">Contact</a>
+      </nav>
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="Switch to light mode" aria-pressed="false">
+        <span aria-hidden="true" id="theme-icon">☀</span>
+      </button>
+      <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
+        <span aria-hidden="true">☰</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- =====================================================
+       HOME VIEW (your smooth-scroll design lives here)
+       ===================================================== -->
+  <div id="home-view">
+
+    <!-- HERO -->
+    <section class="hero" id="home">
+
+      <!-- ================= HERO BACKGROUND =================
+           This is the spot for your animation. It already holds the
+           grid + glowing orb from your design. To use a different
+           animation later, replace what is between the two markers.
+           Keep the wrapper <div class="hero-bg"> so it stays behind
+           the text. -->
+      <div class="hero-bg" aria-hidden="true">
+        <div class="grid-bg"></div>
+        <div class="orb-wrap">
+          <div class="orb"></div>
+        </div>
+      </div>
+      <!-- ================= END HERO BACKGROUND ================= -->
+
+      <div class="hero-content">
+        <div class="hero-inner">
+          <div class="eyebrow">FREE NOTES FOR ENGINEERING STUDENTS</div>
+          <h1>MENTOR<br>HARRY.<small>for Engineering</small></h1>
+          <p>Pick your branch, semester, subject and unit. Read notes in your browser or download the PDF. Free, always.</p>
+
+          <form class="search" id="search-form" role="search" autocomplete="off">
+            <label for="search-input" class="sr-only">Search a subject or unit</label>
+            <input id="search-input" type="search" placeholder="Search a subject or unit, e.g. Data Structures" aria-controls="search-results">
+            <button type="submit" aria-label="Search">⌕</button>
+            <div id="search-results" class="search-results" data-lenis-prevent aria-live="polite" hidden></div>
+          </form>
+
+          <a href="#/branches" class="cta" data-scroll-to="#branches">CHOOSE YOUR BRANCH ↓</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- BRANCH SLIDER -->
+    <section class="section" id="branches" aria-labelledby="branches-title">
+      <div class="container">
+        <div class="section-label reveal">01 / CHOOSE YOUR BRANCH</div>
+        <h2 class="section-title reveal" id="branches-title">Pick your branch.<br>Find your notes.</h2>
+
+        <div class="slider-wrap reveal">
+          <button class="slider-btn prev" type="button" id="slide-prev" aria-label="Previous branches">‹</button>
+          <div class="slider" id="branch-slider" tabindex="0" aria-label="Branches">
+            <!-- skeletons; replaced by app.js when data loads -->
+            <div class="branch-card glass skeleton" aria-hidden="true"></div>
+            <div class="branch-card glass skeleton" aria-hidden="true"></div>
+            <div class="branch-card glass skeleton" aria-hidden="true"></div>
+          </div>
+          <button class="slider-btn next" type="button" id="slide-next" aria-label="Next branches">›</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="section" id="how" aria-labelledby="how-title">
+      <div class="container">
+        <div class="section-label reveal">02 / HOW IT WORKS</div>
+        <h2 class="section-title reveal" id="how-title">Four clicks.<br>Exactly your unit.</h2>
+        <p class="description reveal">No clutter, no sign-up. Go from branch to the exact unit you are studying tonight.</p>
+
+        <div class="cards">
+          <div class="card glass">
+            <span aria-hidden="true">✧</span>
+            <h3>CHOOSE</h3>
+            <p>Select your branch and semester. Subjects follow your university syllabus.</p>
+          </div>
+          <div class="card glass">
+            <span aria-hidden="true">◈</span>
+            <h3>NAVIGATE</h3>
+            <p>Open a subject and see every unit with a short description of what it covers.</p>
+          </div>
+          <div class="card glass">
+            <span aria-hidden="true">⌘</span>
+            <h3>STUDY</h3>
+            <p>View notes in the browser, download PDFs, and bookmark units for later.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- IMMERSIVE -->
+    <section class="section immersive" id="future" aria-labelledby="future-title">
+      <div class="section-label reveal">03 / THE NEXT CHAPTER</div>
+      <h2 class="zoom-text" id="future-title">STUDY<br>SMARTER.</h2>
+      <p class="description reveal">Learn faster with notes made for the exam. Got great notes yourself? Share them with other students.</p>
+      <div class="cta-row reveal">
+        <a href="#/branches" class="cta" data-scroll-to="#branches">START STUDYING ↑</a>
+        <a href="#/contribute" class="cta cta-alt">CONTRIBUTE NOTES</a>
+      </div>
+    </section>
+  </div>
+
+  <!-- =====================================================
+       PAGE VIEW (branch, subject, bookmarks, about, ...)
+       Filled by js/app.js
+       ===================================================== -->
+  <div id="page-view" hidden></div>
+</main>
+
+<footer class="footer">
+  <p>MENTOR HARRY FOR ENGINEERING © <span id="year">2026</span></p>
+  <p class="footer-links">
+    <a href="#/about">About</a> · <a href="#/contribute">Contribute</a> · <a href="#/contact">Contact</a>
+  </p>
+</footer>
+
+<!-- ============ PDF VIEWER ============ -->
+<div class="modal" id="viewer" role="dialog" aria-modal="true" aria-labelledby="viewer-title" hidden>
+  <div class="modal-box glass">
+    <div class="modal-head">
+      <h2 id="viewer-title">Document</h2>
+      <div class="modal-actions">
+        <a class="btn btn-sm btn-ghost" id="viewer-open" href="#" target="_blank" rel="noopener">Open in new tab ↗</a>
+        <button class="btn btn-sm" id="viewer-close" type="button">Close ✕</button>
+      </div>
+    </div>
+    <iframe id="viewer-frame" title="PDF viewer" src="about:blank"></iframe>
+    <p class="modal-note">If the PDF does not show on your phone, tap "Open in new tab".</p>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- ============ LIBRARIES ============ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
+<script src="https://unpkg.com/lenis@1.3.1/dist/lenis.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- ============ OUR CODE (order matters) ============ -->
+<script>
+/* =====================================================
+   js/sample-data.js — demo content used ONLY when the
+   Supabase keys in config.js are not filled in yet.
+   Once Supabase is connected this file is ignored.
+   Subject and unit names are samples: edit them to match
+   your real syllabus (in Stage 2 you will do it from the
+   Admin Portal, no code needed).
+   ===================================================== */
+window.MH_SAMPLE = {
+  branches: [
+    {
+      id: 'b-cse', slug: 'cse', name: 'CSE', icon: '💻',
+      full_name: 'Computer Science & Engineering',
+      description: 'Programming, data structures, algorithms, databases, operating systems and more.',
+      position: 1, published: true
+    }
+  ],
+  subjects: [
+    {
+      id: 's-ds', branch_id: 'b-cse', semester: 3, code: null, name: 'Data Structures',
+      description: 'Arrays, stacks, queues, linked lists, trees, graphs, sorting and hashing.',
+      position: 1, published: true
+    },
+    {
+      id: 's-dm', branch_id: 'b-cse', semester: 3, code: null, name: 'Discrete Structures',
+      description: 'Sets, logic, algebraic structures, graph theory and combinatorics.',
+      position: 2, published: true
+    }
+  ],
+  units: [
+    { id: 'u-ds1', subject_id: 's-ds', unit_number: 1, title: 'Introduction and Arrays', description: 'Algorithms, complexity, arrays and basic operations.', notes_path: null, iq_path: null, pyq_path: null, position: 1, published: true },
+    { id: 'u-ds2', subject_id: 's-ds', unit_number: 2, title: 'Stacks and Queues', description: 'Stack and queue operations, applications, circular and priority queues.', notes_path: null, iq_path: null, pyq_path: null, position: 2, published: true },
+    { id: 'u-ds3', subject_id: 's-ds', unit_number: 3, title: 'Linked Lists', description: 'Singly, doubly and circular linked lists with operations.', notes_path: null, iq_path: null, pyq_path: null, position: 3, published: true },
+    { id: 'u-ds4', subject_id: 's-ds', unit_number: 4, title: 'Trees', description: 'Binary trees, BST, AVL trees, traversals and heaps.', notes_path: null, iq_path: null, pyq_path: null, position: 4, published: true },
+    { id: 'u-ds5', subject_id: 's-ds', unit_number: 5, title: 'Graphs, Sorting and Hashing', description: 'Graph representation, BFS and DFS, sorting algorithms and hash tables.', notes_path: null, iq_path: null, pyq_path: null, position: 5, published: true },
+
+    { id: 'u-dm1', subject_id: 's-dm', unit_number: 1, title: 'Sets, Relations and Functions', description: 'Set operations, relations, equivalence and functions.', notes_path: null, iq_path: null, pyq_path: null, position: 1, published: true },
+    { id: 'u-dm2', subject_id: 's-dm', unit_number: 2, title: 'Propositional Logic', description: 'Propositions, truth tables, normal forms and inference.', notes_path: null, iq_path: null, pyq_path: null, position: 2, published: true },
+    { id: 'u-dm3', subject_id: 's-dm', unit_number: 3, title: 'Algebraic Structures', description: 'Groups, rings, fields and lattices.', notes_path: null, iq_path: null, pyq_path: null, position: 3, published: true },
+    { id: 'u-dm4', subject_id: 's-dm', unit_number: 4, title: 'Graph Theory', description: 'Graph types, paths, trees, planarity and colouring.', notes_path: null, iq_path: null, pyq_path: null, position: 4, published: true },
+    { id: 'u-dm5', subject_id: 's-dm', unit_number: 5, title: 'Combinatorics', description: 'Counting principles, permutations, combinations and recurrence relations.', notes_path: null, iq_path: null, pyq_path: null, position: 5, published: true }
+  ]
+};
+
+</script>
+<script>
+/* =====================================================
+   js/animations.js — your smooth-scroll design
+   (GSAP + ScrollTrigger + Lenis), adapted for the site.
+
+   It exposes window.MHAnim so app.js can ask for
+   scrolling, page transitions and scroll-locking without
+   knowing which library is running underneath.
+   If the libraries fail to load, or the visitor prefers
+   reduced motion, the site still works with plain scrolling.
+   ===================================================== */
+(function () {
+  'use strict';
+
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var hasLibs = window.gsap && window.ScrollTrigger && window.Lenis;
+
+  // Safe fallbacks (used when animation is off)
+  var api = {
+    refresh: function () {},
+    toTop: function () { window.scrollTo(0, 0); },
+    scrollTo: function (sel) {
+      var el = document.querySelector(sel);
+      if (el) el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
+    },
+    pageIn: function () {},
+    lock: function (on) { document.body.style.overflow = on ? 'hidden' : ''; }
+  };
+  window.MHAnim = api;
+
+  if (reduce || !hasLibs) return;
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  // 1. LENIS SMOOTH SCROLL
+  var lenis = new Lenis({
+    duration: 1.2,
+    smoothWheel: true,
+    wheelMultiplier: 1,
+    touchMultiplier: 1
+  });
+  lenis.on('scroll', ScrollTrigger.update);
+  gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
+  gsap.ticker.lagSmoothing(0);
+
+  // 2. HERO ENTRANCE (on inner wrappers so it never fights the scroll effect)
+  gsap.from('.hero-inner', { opacity: 0, y: 100, scale: 0.9, duration: 1.5, ease: 'power4.out' });
+  gsap.from('.orb', { opacity: 0, scale: 0.3, duration: 2, ease: 'power3.out' });
+
+  // 3. FLOATING ORB
+  gsap.to('.orb', {
+    y: -50, x: 35, rotation: 25, duration: 4,
+    repeat: -1, yoyo: true, ease: 'sine.inOut'
+  });
+
+  // 4. HERO PARALLAX ON SCROLL
+  gsap.to('.hero-content', {
+    y: -180, opacity: 0, scale: 0.8,
+    scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 1 }
+  });
+  gsap.to('.orb-wrap', {
+    y: 250, scale: 1.7, opacity: 0,
+    scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 1 }
+  });
+
+  // 5. REVEAL ON SCROLL
+  gsap.utils.toArray('#home-view .reveal').forEach(function (el) {
+    gsap.from(el, {
+      y: 70, opacity: 0, duration: 1, ease: 'power3.out',
+      scrollTrigger: { trigger: el, start: 'top 85%', toggleActions: 'play none none reverse' }
+    });
+  });
+
+  // 6. CARD STAGGER
+  gsap.from('#home-view .card', {
+    y: 100, opacity: 0, stagger: 0.2, duration: 1.2, ease: 'power3.out',
+    scrollTrigger: { trigger: '.cards', start: 'top 80%' }
+  });
+
+  // 7. ZOOM TEXT ON SCROLL
+  gsap.fromTo('.zoom-text',
+    { scale: 0.5, opacity: 0 },
+    {
+      scale: 1, opacity: 1, ease: 'none',
+      scrollTrigger: { trigger: '.immersive', start: 'top 80%', end: 'center center', scrub: 1 }
+    }
+  );
+
+  // ---------- helpers for app.js ----------
+  api.refresh = function () { ScrollTrigger.refresh(); };
+  api.toTop = function () { lenis.scrollTo(0, { immediate: true }); };
+  api.scrollTo = function (sel) { lenis.scrollTo(sel, { offset: -10, duration: 1.4 }); };
+  api.lock = function (on) { if (on) lenis.stop(); else lenis.start(); };
+  api.pageIn = function (el) {
+    gsap.fromTo(el, { opacity: 0, y: 30 },
+      { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out', clearProps: 'opacity,transform' });
+  };
+})();
+
+</script>
+<script>
+/* =====================================================
+   js/admin.js — Admin Portal
+   Open it at:  your-site-address/#/admin
+
+   What it does (only for the logged-in admin):
+     - Login with email + password (Supabase Auth)
+     - Dashboard with counts
+     - Add / edit / delete / reorder / publish:
+         branches, subjects, units
+     - Upload, replace, rename, preview, delete PDFs
+     - Review notes sent through the "Contribute" form
+
+   Security: the real protection is NOT in this file. It is
+   the Row Level Security + admin rules you ran in Supabase
+   (SQL). Even if someone edits this code in their browser,
+   Supabase refuses every change unless they are the admin.
+   ===================================================== */
+(function () {
+  'use strict';
+
+  var MH, db, bucket;
+  var MAX_MB = 20;
+  var DOCS = [
+    { kind: 'notes', col: 'notes_path', label: 'Notes' },
+    { kind: 'iq', col: 'iq_path', label: 'Important Questions' },
+    { kind: 'pyq', col: 'pyq_path', label: 'PYQ' }
+  ];
+  var TABS = [
+    ['dashboard', 'Dashboard'], ['branches', 'Branches'], ['subjects', 'Subjects'],
+    ['units', 'Units & PDFs'], ['submissions', 'Submissions']
+  ];
+  var A = {
+    tab: 'dashboard', user: null, pick: null,
+    f: { branch: '', ssem: '', sem: '', subject: '', sub: 'pending' },
+    data: { branches: [], subjects: [], units: [], submissions: [] }
+  };
+
+  // ---------- helpers ----------
+  function $(s, r) { return (r || document).querySelector(s); }
+  function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+  function esc(v) { return MH.esc(v); }
+  function toast(m) { MH.toast(m); }
+  function root() { return document.getElementById('admin-root'); }
+  function chk(r) { if (r && r.error) throw r.error; return r; }
+  function nz(v) { return v === '' || v == null ? null : v; }
+  function byId(list, id) { return list.filter(function (x) { return x.id === id; })[0]; }
+  function slugify(s) { return String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
+  function rand() {
+    var a = new Uint8Array(4);
+    (window.crypto || window.msCrypto).getRandomValues(a);
+    return Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  }
+  function sortPos(list) {
+    return list.slice().sort(function (x, y) {
+      return ((x.position || 0) - (y.position || 0)) || (String(x.created_at) < String(y.created_at) ? -1 : 1);
+    });
+  }
+  function nextPos(list) {
+    return list.reduce(function (m, x) { return Math.max(m, x.position || 0); }, 0) + 1;
+  }
+  function errMsg(e) {
+    if (!e) return 'Something went wrong.';
+    if (e.code === '23505') return 'That already exists (duplicate number or address).';
+    if (e.code === '42501' || /row-level security|permission denied/i.test(e.message || ''))
+      return 'Not allowed. Make sure you ran the admin SQL and are logged in as the admin.';
+    return e.message || 'Something went wrong.';
+  }
+  function notice(title, text) { return '<div class="glass empty"><b>' + esc(title) + '</b>' + esc(text) + '</div>'; }
+  function range(a, b) { var r = []; for (var i = a; i <= b; i++) r.push(i); return r; }
+  function colOf(kind) { return DOCS.filter(function (d) { return d.kind === kind; })[0].col; }
+  function labelOf(kind) { return DOCS.filter(function (d) { return d.kind === kind; })[0].label; }
+  function prettyName(path) {
+    return String(path).split('/').pop().replace(/\.pdf$/i, '')
+      .replace(/^u\d+-(notes|iq|pyq)-/, '').replace(/-[0-9a-f]{8}$/, '') + '.pdf';
+  }
+  function filePaths(units) {
+    var out = [];
+    units.forEach(function (u) { DOCS.forEach(function (d) { if (u[d.col]) out.push(u[d.col]); }); });
+    return out;
+  }
+  function removeFiles(paths) {
+    paths = paths.filter(Boolean);
+    if (!paths.length) return Promise.resolve();
+    return db.storage.from(bucket).remove(paths).then(chk);
+  }
+
+  // =====================================================
+  // MODALS: generic, confirm, form
+  // =====================================================
+  function openModal(inner) {
+    var ov = document.createElement('div');
+    ov.className = 'amodal';
+    ov.innerHTML = '<div class="amodal-box glass" role="dialog" aria-modal="true" data-lenis-prevent>' + inner + '</div>';
+    document.body.appendChild(ov);
+    window.MHAnim.lock(true);
+    var prev = document.activeElement;
+    function close() {
+      document.removeEventListener('keydown', onKey);
+      if (ov.parentNode) ov.parentNode.removeChild(ov);
+      window.MHAnim.lock(false);
+      if (prev && prev.focus) prev.focus();
+    }
+    function cancel() { close(); ov.dispatchEvent(new Event('cancel')); }
+    function onKey(e) { if (e.key === 'Escape') cancel(); }
+    document.addEventListener('keydown', onKey);
+    ov.addEventListener('mousedown', function (e) { if (e.target === ov) cancel(); });
+    var first = ov.querySelector('input, select, textarea, button');
+    if (first) first.focus();
+    return { el: ov, close: close };
+  }
+
+  function confirmBox(message, label) {
+    return new Promise(function (resolve) {
+      var m = openModal('<h2>Are you sure?</h2><p class="hint" style="font-size:14px">' + esc(message) + '</p>' +
+        '<div class="amodal-actions"><button type="button" class="btn btn-ghost" data-x="no">Cancel</button>' +
+        '<button type="button" class="btn btn-danger" data-x="yes">' + esc(label || 'Delete') + '</button></div>');
+      m.el.addEventListener('cancel', function () { resolve(false); });
+      m.el.querySelector('[data-x=no]').onclick = function () { m.close(); resolve(false); };
+      m.el.querySelector('[data-x=yes]').onclick = function () { m.close(); resolve(true); };
+      m.el.querySelector('[data-x=no]').focus();
+    });
+  }
+
+  function fieldHtml(f) {
+    var id = 'f-' + f.name, val = f.value == null ? '' : f.value, h;
+    var hint = f.hint ? '<small class="hint">' + esc(f.hint) + '</small>' : '';
+    if (f.type === 'checkbox') {
+      return '<div class="field check"><label><input type="checkbox" id="' + id + '" name="' + f.name + '"' + (val ? ' checked' : '') + '> ' + esc(f.label) + '</label>' + hint + '</div>';
+    }
+    if (f.type === 'select') {
+      h = '<select id="' + id + '" name="' + f.name + '">' + f.options.map(function (o) {
+        return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(val) ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+      }).join('') + '</select>';
+    } else if (f.type === 'textarea') {
+      h = '<textarea id="' + id + '" name="' + f.name + '" maxlength="' + (f.maxlength || 500) + '">' + esc(val) + '</textarea>';
+    } else {
+      h = '<input id="' + id + '" name="' + f.name + '" type="' + (f.type || 'text') + '" value="' + esc(val) + '"' +
+        (f.maxlength ? ' maxlength="' + f.maxlength + '"' : '') + (f.placeholder ? ' placeholder="' + esc(f.placeholder) + '"' : '') + '>';
+    }
+    return '<div class="field"><label for="' + id + '">' + esc(f.label) + (f.required ? ' *' : '') + '</label>' + h + hint + '</div>';
+  }
+
+  // onSubmit(values) returns: true (close), false (stay open), or a string (error text)
+  function formModal(title, fields, submitLabel, onSubmit) {
+    var m = openModal('<h2>' + esc(title) + '</h2><form id="a-form" novalidate>' + fields.map(fieldHtml).join('') +
+      '<p class="a-err" id="a-err" role="alert"></p>' +
+      '<div class="amodal-actions"><button type="button" class="btn btn-ghost" data-x="cancel">Cancel</button>' +
+      '<button type="submit" class="btn">' + esc(submitLabel || 'Save') + '</button></div></form>');
+    m.el.querySelector('[data-x=cancel]').onclick = m.close;
+    m.el.querySelector('#a-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var v = {}, err = m.el.querySelector('#a-err'), btn = m.el.querySelector('button[type=submit]');
+      fields.forEach(function (f) {
+        var el = m.el.querySelector('[name="' + f.name + '"]');
+        v[f.name] = f.type === 'checkbox' ? el.checked : el.value.trim();
+      });
+      for (var i = 0; i < fields.length; i++) {
+        if (fields[i].required && !v[fields[i].name]) { err.textContent = fields[i].label + ' is required.'; return; }
+      }
+      err.textContent = ''; btn.disabled = true;
+      Promise.resolve(onSubmit(v)).then(function (r) {
+        if (r === true) m.close();
+        else { btn.disabled = false; if (typeof r === 'string') err.textContent = r; }
+      });
+    });
+  }
+
+  // Run a database change, then reload everything and redraw
+  function mutate(fn, okMsg) {
+    return Promise.resolve().then(fn).then(function () {
+      MH.state.dirty = true;
+      return loadAll();
+    }).then(function () {
+      view(); if (okMsg) toast(okMsg);
+      return true;
+    }).catch(function (e) {
+      console.error(e); toast(errMsg(e)); return false;
+    });
+  }
+
+  // =====================================================
+  // SESSION: start, login, logout
+  // =====================================================
+  function render(parts) {
+    MH = window.MH; db = MH.state.client; bucket = MH.cfg.BUCKET || 'notes';
+    var tab = parts && parts[0];
+    if (TABS.some(function (t) { return t[0] === tab; })) A.tab = tab;
+    if (!root()) {
+      MH.mountPage('<section class="page admin"><div class="container" id="admin-root"></div></section>', 'Admin', '');
+    }
+    start();
+  }
+
+  function start() {
+    if (!db) {
+      root().innerHTML = notice('Supabase is not connected yet',
+        'Paste your Supabase URL and public key into the SETTINGS block at the top of index.html, then reload this page.');
+      return;
+    }
+    root().innerHTML = '<div class="glass skeleton" style="height:160px"></div>';
+    db.auth.getSession().then(function (r) {
+      var s = r.data && r.data.session;
+      if (!s) return loginView();
+      return checkAdmin(s.user).then(function (ok) {
+        if (ok) { A.user = s.user; return enter(); }
+        return db.auth.signOut().then(function () { loginView('This account is not an admin.'); });
+      });
+    }).catch(function (e) {
+      console.error(e); loginView('Could not reach Supabase. Check your internet and your settings.');
+    });
+  }
+
+  function checkAdmin(user) {
+    return db.from('admins').select('user_id').eq('user_id', user.id).maybeSingle().then(function (r) {
+      if (r.error) console.error(r.error);
+      return !!(r.data);
+    });
+  }
+
+  function loginView(msg) {
+    root().innerHTML = '<div class="login glass"><div class="section-label">ADMIN</div><h1>Sign in</h1>' +
+      '<form id="login-form" novalidate>' +
+      '<div class="field"><label for="l-email">Email</label><input id="l-email" type="email" autocomplete="username" required></div>' +
+      '<div class="field"><label for="l-pass">Password</label><input id="l-pass" type="password" autocomplete="current-password" required></div>' +
+      '<p class="a-err" id="l-err" role="alert">' + esc(msg || '') + '</p>' +
+      '<button class="btn" type="submit" id="l-btn">Sign in</button></form>' +
+      '<a href="#/" class="hint">← Back to the site</a></div>';
+    $('#login-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var email = $('#l-email').value.trim(), pass = $('#l-pass').value, err = $('#l-err'), btn = $('#l-btn');
+      if (!email || !pass) { err.textContent = 'Enter your email and password.'; return; }
+      btn.disabled = true; err.textContent = '';
+      db.auth.signInWithPassword({ email: email, password: pass }).then(function (r) {
+        if (r.error || !r.data || !r.data.session) { btn.disabled = false; err.textContent = 'Wrong email or password.'; return; }
+        return checkAdmin(r.data.user).then(function (ok) {
+          if (!ok) {
+            return db.auth.signOut().then(function () { btn.disabled = false; err.textContent = 'This account does not have admin access.'; });
+          }
+          A.user = r.data.user; return enter();
+        });
+      }).catch(function (e2) { console.error(e2); btn.disabled = false; err.textContent = 'Could not sign in. Try again.'; });
+    });
+  }
+
+  function enter() {
+    return loadAll().then(shell).catch(function (e) {
+      console.error(e);
+      root().innerHTML = notice('Could not load admin data', errMsg(e) + ' Did you run the full setup SQL?');
+    });
+  }
+
+  function loadAll() {
+    return Promise.all([
+      db.from('branches').select('*').order('position'),
+      db.from('subjects').select('*').order('position'),
+      db.from('units').select('*').order('position'),
+      db.from('submissions').select('*').order('created_at', { ascending: false })
+    ]).then(function (r) {
+      var err = r[0].error || r[1].error || r[2].error || r[3].error;
+      if (err) throw err;
+      A.data = { branches: r[0].data || [], subjects: r[1].data || [], units: r[2].data || [], submissions: r[3].data || [] };
+    });
+  }
+
+  function shell() {
+    var el = root();
+    el.innerHTML = '<div class="admin-bar"><div><div class="section-label">ADMIN PORTAL</div><h1>Mentor Harry</h1></div>' +
+      '<div class="admin-user"><span>' + esc(A.user && A.user.email) + '</span>' +
+      '<button class="btn btn-sm btn-ghost" type="button" data-a="logout">Log out</button></div></div>' +
+      '<div class="tabs" role="tablist" aria-label="Admin sections" id="a-tabs">' +
+      TABS.map(function (t) {
+        return '<button class="tab" role="tab" type="button" data-a="tab" data-tab="' + t[0] + '">' + t[1] + '</button>';
+      }).join('') + '</div><div id="a-view" role="tabpanel"></div>';
+    bind(el);
+    view();
+  }
+
+  function setTab(tab) {
+    A.tab = tab;
+    try { history.replaceState(null, '', '#/admin/' + tab); } catch (e) {}
+    view();
+  }
+
+  function view() {
+    var v = $('#a-view'); if (!v) return;
+    $$('#a-tabs .tab').forEach(function (b) {
+      b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === A.tab));
+    });
+    ({ dashboard: viewDashboard, branches: viewBranches, subjects: viewSubjects, units: viewUnits, submissions: viewSubs })[A.tab](v);
+  }
+
+  // =====================================================
+  // SHARED PIECES
+  // =====================================================
+  function sw(type, id, on) {
+    return '<label class="switch"><input type="checkbox" role="switch" data-pub="' + type + '" data-id="' + id + '"' + (on ? ' checked' : '') + '>' +
+      '<span class="sw" aria-hidden="true"></span><span class="sw-label">' + (on ? 'Published' : 'Draft') + '</span></label>';
+  }
+
+  function actions(type, id, i, n, name) {
+    var d = ' data-type="' + type + '" data-id="' + id + '"';
+    return '<div class="arow-actions">' +
+      '<button class="btn btn-sm btn-ghost" type="button" data-a="up"' + d + ' aria-label="Move up"' + (i === 0 ? ' disabled' : '') + '>▲</button>' +
+      '<button class="btn btn-sm btn-ghost" type="button" data-a="down"' + d + ' aria-label="Move down"' + (i === n - 1 ? ' disabled' : '') + '>▼</button>' +
+      '<button class="btn btn-sm btn-ghost" type="button" data-a="edit"' + d + ' aria-label="Edit ' + esc(name) + '">Edit</button>' +
+      '<button class="btn btn-sm btn-danger" type="button" data-a="del"' + d + ' aria-label="Delete ' + esc(name) + '">Delete</button></div>';
+  }
+
+  function filterSel(name, label, opts, val) {
+    return '<label class="fsel"><span>' + esc(label) + '</span><select data-filter="' + name + '">' + opts.map(function (o) {
+      return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(val) ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+    }).join('') + '</select></label>';
+  }
+
+  // The group an item is ordered within
+  function scopeOf(type, item) {
+    return sortPos(A.data[type].filter(function (x) {
+      if (type === 'branches') return true;
+      if (type === 'subjects') return x.branch_id === item.branch_id && x.semester === item.semester;
+      return x.subject_id === item.subject_id;
+    }));
+  }
+
+  function move(type, id, dir) {
+    var item = byId(A.data[type], id); if (!item) return;
+    var list = scopeOf(type, item), i = list.indexOf(item), j = i + dir;
+    if (j < 0 || j >= list.length) return;
+    list.splice(j, 0, list.splice(i, 1)[0]);
+    return mutate(function () {
+      return Promise.all(list.map(function (x, k) {
+        return x.position !== k + 1 ? db.from(type).update({ position: k + 1 }).eq('id', x.id).then(chk) : null;
+      }));
+    });
+  }
+
+  function fixFilters(needSem) {
+    var d = A.data, f = A.f;
+    if (!byId(d.branches, f.branch)) f.branch = d.branches.length ? sortPos(d.branches)[0].id : '';
+    if (needSem) {
+      var subs = d.subjects.filter(function (s) { return s.branch_id === f.branch; });
+      if (!(parseInt(f.sem, 10) >= 1)) {
+        f.sem = subs.length ? String(Math.min.apply(null, subs.map(function (s) { return s.semester; }))) : '1';
+      }
+      var list = subs.filter(function (s) { return String(s.semester) === String(f.sem); });
+      if (!byId(list, f.subject)) f.subject = list.length ? sortPos(list)[0].id : '';
+    }
+  }
+
+  // =====================================================
+  // VIEWS
+  // =====================================================
+  function viewDashboard(v) {
+    var d = A.data, pdfs = filePaths(d.units).length;
+    var drafts = [d.branches, d.subjects, d.units].reduce(function (n, l) {
+      return n + l.filter(function (x) { return !x.published; }).length;
+    }, 0);
+    var pending = d.submissions.filter(function (s) { return s.status === 'pending'; }).length;
+    function stat(n, label, tab) {
+      return '<button type="button" class="stat glass" data-a="tab" data-tab="' + tab + '"><b>' + n + '</b><span>' + label + '</span></button>';
+    }
+    v.innerHTML = '<div class="stats">' +
+      stat(d.branches.length, 'Branches', 'branches') + stat(d.subjects.length, 'Subjects', 'subjects') +
+      stat(d.units.length, 'Units', 'units') + stat(pdfs, 'PDFs uploaded', 'units') +
+      stat(drafts, 'Drafts (hidden from students)', 'units') + stat(pending, 'Notes to review', 'submissions') + '</div>' +
+      '<div class="glass empty" style="margin-top:26px;text-align:left"><b>How to add notes</b>' +
+      '1. Branches: add a branch.<br>2. Subjects: add subjects for a semester.<br>3. Units &amp; PDFs: add the units, then drag a PDF onto the Notes box.<br>' +
+      '4. Flip the switch to Published when it is ready. Drafts stay hidden from students.</div>';
+  }
+
+  function viewBranches(v) {
+    var list = sortPos(A.data.branches);
+    var h = '<div class="atoolbar"><button class="btn" type="button" data-a="add" data-type="branches">+ Add branch</button></div>';
+    if (!list.length) h += notice('No branches yet', 'Click "Add branch" to create your first one, for example CSE.');
+    h += list.map(function (b, i) {
+      var n = A.data.subjects.filter(function (s) { return s.branch_id === b.id; }).length;
+      return '<div class="arow glass"><span class="branch-icon" aria-hidden="true">' + esc(b.icon || '🎓') + '</span>' +
+        '<div class="grow"><b>' + esc(b.name) + '</b> <small>/' + esc(b.slug) + ' · ' + n + ' subject' + (n === 1 ? '' : 's') + '</small>' +
+        (b.full_name ? '<br><small>' + esc(b.full_name) + '</small>' : '') + '</div>' +
+        sw('branches', b.id, b.published) + actions('branches', b.id, i, list.length, b.name) + '</div>';
+    }).join('');
+    v.innerHTML = h;
+  }
+
+  function viewSubjects(v) {
+    fixFilters(false);
+    if (!A.data.branches.length) { v.innerHTML = notice('Add a branch first', 'Open the Branches tab and add one.'); return; }
+    var bopts = sortPos(A.data.branches).map(function (b) { return [b.id, b.name]; });
+    var sopts = [['', 'All semesters']].concat(range(1, 8).map(function (i) { return [String(i), 'Semester ' + i]; }));
+    var list = A.data.subjects.filter(function (s) {
+      return s.branch_id === A.f.branch && (A.f.ssem === '' || String(s.semester) === A.f.ssem);
+    }).sort(function (a, b) { return (a.semester - b.semester) || (a.position - b.position); });
+    var h = '<div class="atoolbar">' + filterSel('branch', 'Branch', bopts, A.f.branch) + filterSel('ssem', 'Semester', sopts, A.f.ssem) +
+      '<button class="btn" type="button" data-a="add" data-type="subjects">+ Add subject</button></div>';
+    if (!list.length) h += notice('No subjects here yet', 'Click "Add subject" to create one.');
+    h += list.map(function (s) {
+      var sc = scopeOf('subjects', s);
+      var n = A.data.units.filter(function (u) { return u.subject_id === s.id; }).length;
+      return '<div class="arow glass"><span class="chip">Sem ' + s.semester + '</span>' +
+        '<div class="grow"><b>' + esc(s.name) + '</b> <small>' + (s.code ? esc(s.code) + ' · ' : '') + n + ' unit' + (n === 1 ? '' : 's') + '</small></div>' +
+        sw('subjects', s.id, s.published) + actions('subjects', s.id, sc.indexOf(s), sc.length, s.name) + '</div>';
+    }).join('');
+    v.innerHTML = h;
+  }
+
+  function slotHtml(u, d) {
+    var path = u[d.col], dt = ' data-unit="' + u.id + '" data-kind="' + d.kind + '"';
+    var btns = '<button class="btn btn-sm" type="button" data-a="upload" data-id="' + u.id + '" data-kind="' + d.kind + '">' + (path ? 'Replace' : 'Upload') + '</button>';
+    if (path) {
+      btns += '<button class="btn btn-sm btn-ghost" type="button" data-a="preview" data-id="' + u.id + '" data-kind="' + d.kind + '">Preview</button>' +
+        '<button class="btn btn-sm btn-ghost" type="button" data-a="rename" data-id="' + u.id + '" data-kind="' + d.kind + '">Rename</button>' +
+        '<button class="btn btn-sm btn-danger" type="button" data-a="rmfile" data-id="' + u.id + '" data-kind="' + d.kind + '">Remove</button>';
+    }
+    return '<div class="slot"' + dt + '><div class="slot-label">' + d.label + '</div>' +
+      '<div class="slot-file' + (path ? ' has' : '') + '">' + (path ? esc(prettyName(path)) : 'No file yet. Drag a PDF here or click Upload.') + '</div>' +
+      '<div class="slot-btns">' + btns + '</div></div>';
+  }
+
+  function viewUnits(v) {
+    fixFilters(true);
+    if (!A.data.branches.length) { v.innerHTML = notice('Add a branch first', 'Open the Branches tab and add one.'); return; }
+    var bopts = sortPos(A.data.branches).map(function (b) { return [b.id, b.name]; });
+    var sopts = range(1, 8).map(function (i) { return [String(i), 'Semester ' + i]; });
+    var subs = sortPos(A.data.subjects.filter(function (s) { return s.branch_id === A.f.branch && String(s.semester) === String(A.f.sem); }));
+    var subopts = subs.length ? subs.map(function (s) { return [s.id, s.name]; }) : [['', 'No subjects']];
+    var h = '<div class="atoolbar">' + filterSel('branch', 'Branch', bopts, A.f.branch) + filterSel('sem', 'Semester', sopts, A.f.sem) +
+      filterSel('subject', 'Subject', subopts, A.f.subject) +
+      '<button class="btn" type="button" data-a="add" data-type="units"' + (A.f.subject ? '' : ' disabled') + '>+ Add unit</button></div>';
+    if (!A.f.subject) { v.innerHTML = h + notice('No subjects in this semester', 'Add one in the Subjects tab first.'); return; }
+    var units = sortPos(A.data.units.filter(function (u) { return u.subject_id === A.f.subject; }));
+    if (!units.length) h += notice('No units yet', 'Click "Add unit". Most subjects have 5 units.');
+    h += units.map(function (u, i) {
+      return '<article class="aunit glass"><div class="aunit-head"><span class="unit-num" aria-hidden="true">' + u.unit_number + '</span>' +
+        '<div class="grow"><b>' + esc(u.title) + '</b>' + (u.description ? '<br><small>' + esc(u.description) + '</small>' : '') + '</div>' +
+        sw('units', u.id, u.published) + actions('units', u.id, i, units.length, 'Unit ' + u.unit_number) + '</div>' +
+        '<div class="slots">' + DOCS.map(function (d) { return slotHtml(u, d); }).join('') + '</div></article>';
+    }).join('');
+    h += '<input type="file" id="a-file" accept="application/pdf,.pdf" hidden>';
+    v.innerHTML = h;
+  }
+
+  function viewSubs(v) {
+    var all = A.data.submissions, st = A.f.sub;
+    function cnt(s) { return s === 'all' ? all.length : all.filter(function (x) { return x.status === s; }).length; }
+    var h = '<div class="atoolbar">' + ['pending', 'approved', 'rejected', 'all'].map(function (s) {
+      return '<button class="tab" type="button" role="tab" data-a="subfilter" data-val="' + s + '" aria-selected="' + (st === s) + '">' +
+        s.charAt(0).toUpperCase() + s.slice(1) + ' (' + cnt(s) + ')</button>';
+    }).join('') + '</div>' +
+      '<p class="hint" style="margin-bottom:16px">Approving only marks a submission as reviewed. To publish the notes, open the link, then upload the PDF in Units &amp; PDFs.</p>';
+    var list = all.filter(function (x) { return st === 'all' || x.status === st; });
+    if (!list.length) h += notice('Nothing here', 'No ' + (st === 'all' ? '' : st + ' ') + 'submissions.');
+    h += list.map(function (s) {
+      var where = [s.branch, s.subject, s.unit].filter(Boolean).map(esc).join(' · ');
+      var d = ' data-id="' + s.id + '"';
+      return '<article class="asub glass"><div class="asub-head"><b>' + esc(s.name) + '</b>' +
+        '<span class="chip status-' + esc(s.status) + '">' + esc(s.status) + '</span>' +
+        '<small>' + esc(new Date(s.created_at).toLocaleString()) + '</small></div>' +
+        (where ? '<p>' + where + '</p>' : '') +
+        (s.email ? '<p>Email: <a href="mailto:' + esc(s.email) + '">' + esc(s.email) + '</a></p>' : '') +
+        (s.link ? '<p>Link: ' + (/^https?:\/\//i.test(s.link) ? '<a href="' + esc(s.link) + '" target="_blank" rel="noopener noreferrer">' + esc(s.link) + '</a>' : esc(s.link)) + '</p>' : '') +
+        (s.message ? '<p>' + esc(s.message) + '</p>' : '') +
+        '<div class="arow-actions">' +
+        (s.status !== 'approved' ? '<button class="btn btn-sm" type="button" data-a="substatus" data-val="approved"' + d + '>Approve</button>' : '') +
+        (s.status !== 'rejected' ? '<button class="btn btn-sm btn-ghost" type="button" data-a="substatus" data-val="rejected"' + d + '>Reject</button>' : '') +
+        (s.status !== 'pending' ? '<button class="btn btn-sm btn-ghost" type="button" data-a="substatus" data-val="pending"' + d + '>Mark pending</button>' : '') +
+        '<button class="btn btn-sm btn-danger" type="button" data-a="delsub"' + d + '>Delete</button></div></article>';
+    }).join('');
+    v.innerHTML = h;
+  }
+
+  // =====================================================
+  // ADD / EDIT / DELETE
+  // =====================================================
+  function addItem(type) {
+    if (type === 'branches') return branchForm(null);
+    if (type === 'subjects') return subjectForm(null);
+    if (type === 'units') { if (!A.f.subject) return toast('Choose a subject first.'); return unitForm(null); }
+  }
+  function editItem(type, id) {
+    var item = byId(A.data[type], id); if (!item) return;
+    if (type === 'branches') return branchForm(item);
+    if (type === 'subjects') return subjectForm(item);
+    return unitForm(item);
+  }
+
+  function branchForm(item) {
+    formModal(item ? 'Edit branch' : 'Add branch', [
+      { name: 'name', label: 'Name', required: true, value: item && item.name, maxlength: 40, placeholder: 'CSE' },
+      { name: 'slug', label: 'Web address name', value: item && item.slug, maxlength: 40, hint: 'Small letters, numbers and dashes. Leave blank to create it from the name.' },
+      { name: 'full_name', label: 'Full name', value: item && item.full_name, maxlength: 100, placeholder: 'Computer Science & Engineering' },
+      { name: 'icon', label: 'Icon (an emoji)', value: item ? item.icon : '🎓', maxlength: 8 },
+      { name: 'description', label: 'Short description', type: 'textarea', value: item && item.description },
+      { name: 'published', label: 'Published (visible to students)', type: 'checkbox', value: item ? item.published : false }
+    ], 'Save', function (v) {
+      var slug = slugify(v.slug || v.name);
+      if (!slug) return 'Please enter a valid name.';
+      var row = { name: v.name, slug: slug, full_name: nz(v.full_name), icon: v.icon || '🎓', description: nz(v.description), published: v.published };
+      return mutate(function () {
+        if (item) return db.from('branches').update(row).eq('id', item.id).then(chk);
+        row.position = nextPos(A.data.branches);
+        return db.from('branches').insert(row).then(chk);
+      }, 'Branch saved');
+    });
+  }
+
+  function subjectForm(item) {
+    var bopts = sortPos(A.data.branches).map(function (b) { return [b.id, b.name]; });
+    if (!bopts.length) return toast('Add a branch first.');
+    formModal(item ? 'Edit subject' : 'Add subject', [
+      { name: 'branch_id', label: 'Branch', type: 'select', options: bopts, value: item ? item.branch_id : A.f.branch },
+      { name: 'semester', label: 'Semester', type: 'select', options: range(1, 8).map(function (i) { return [i, 'Semester ' + i]; }), value: item ? item.semester : (A.f.ssem || 1) },
+      { name: 'code', label: 'Subject code (optional)', value: item && item.code, maxlength: 20 },
+      { name: 'name', label: 'Subject name', required: true, value: item && item.name, maxlength: 120 },
+      { name: 'description', label: 'Short description', type: 'textarea', value: item && item.description },
+      { name: 'published', label: 'Published (visible to students)', type: 'checkbox', value: item ? item.published : false }
+    ], 'Save', function (v) {
+      var sem = parseInt(v.semester, 10);
+      var row = { branch_id: v.branch_id, semester: sem, code: nz(v.code), name: v.name, description: nz(v.description), published: v.published };
+      return mutate(function () {
+        var same = A.data.subjects.filter(function (s) { return s.branch_id === row.branch_id && s.semester === sem && (!item || s.id !== item.id); });
+        if (item) {
+          if (item.branch_id !== row.branch_id || item.semester !== sem) row.position = nextPos(same);
+          return db.from('subjects').update(row).eq('id', item.id).then(chk);
+        }
+        row.position = nextPos(same);
+        return db.from('subjects').insert(row).then(chk);
+      }, 'Subject saved');
+    });
+  }
+
+  function unitForm(item) {
+    var used = A.data.units.filter(function (u) { return u.subject_id === A.f.subject; }).map(function (u) { return u.unit_number; });
+    var free = range(1, 10).filter(function (n) { return used.indexOf(n) === -1; })[0] || 1;
+    formModal(item ? 'Edit unit' : 'Add unit', [
+      { name: 'unit_number', label: 'Unit number', type: 'select', options: range(1, 10).map(function (i) { return [i, 'Unit ' + i]; }), value: item ? item.unit_number : free },
+      { name: 'title', label: 'Unit title', required: true, value: item && item.title, maxlength: 150 },
+      { name: 'description', label: 'Short description', type: 'textarea', value: item && item.description },
+      { name: 'published', label: 'Published (visible to students)', type: 'checkbox', value: item ? item.published : false }
+    ], 'Save', function (v) {
+      var row = { unit_number: parseInt(v.unit_number, 10), title: v.title, description: nz(v.description), published: v.published };
+      return mutate(function () {
+        if (item) return db.from('units').update(row).eq('id', item.id).then(chk);
+        row.subject_id = A.f.subject;
+        row.position = nextPos(A.data.units.filter(function (u) { return u.subject_id === A.f.subject; }));
+        return db.from('units').insert(row).then(chk);
+      }, 'Unit saved');
+    });
+  }
+
+  function delItem(type, id) {
+    var item = byId(A.data[type], id); if (!item) return;
+    var d = A.data, paths = [], msg;
+    if (type === 'branches') {
+      var subs = d.subjects.filter(function (s) { return s.branch_id === id; });
+      var us = d.units.filter(function (u) { return subs.some(function (s) { return s.id === u.subject_id; }); });
+      paths = filePaths(us);
+      msg = 'Delete branch "' + item.name + '" with ' + subs.length + ' subject(s), ' + us.length + ' unit(s) and ' + paths.length + ' PDF file(s)? This cannot be undone.';
+    } else if (type === 'subjects') {
+      var us2 = d.units.filter(function (u) { return u.subject_id === id; });
+      paths = filePaths(us2);
+      msg = 'Delete subject "' + item.name + '" with ' + us2.length + ' unit(s) and ' + paths.length + ' PDF file(s)? This cannot be undone.';
+    } else {
+      paths = filePaths([item]);
+      msg = 'Delete Unit ' + item.unit_number + ': "' + item.title + '" and its ' + paths.length + ' PDF file(s)? This cannot be undone.';
+    }
+    confirmBox(msg).then(function (ok) {
+      if (!ok) return;
+      mutate(function () {
+        return removeFiles(paths).then(function () { return db.from(type).delete().eq('id', id).then(chk); });
+      }, 'Deleted');
+    });
+  }
+
+  // =====================================================
+  // PDF FILES
+  // =====================================================
+  function buildPath(u, kind, name) {
+    var s = byId(A.data.subjects, u.subject_id), b = s && byId(A.data.branches, s.branch_id);
+    var base = slugify(String(name).replace(/\.pdf$/i, '')).slice(0, 40) || kind;
+    return (b ? b.slug : 'misc') + '/sem' + (s ? s.semester : 0) + '/' + (s ? s.id.slice(0, 8) : 'x') + '/u' + u.unit_number + '-' + kind + '-' + base + '-' + rand() + '.pdf';
+  }
+
+  function setBusy(unitId, kind, on) {
+    var el = $('.slot[data-unit="' + unitId + '"][data-kind="' + kind + '"]');
+    if (!el) return;
+    el.classList.toggle('busy', on);
+    if (on) el.querySelector('.slot-file').textContent = 'Uploading…';
+  }
+
+  function handleFile(unitId, kind, file) {
+    var u = byId(A.data.units, unitId); if (!u || !file) return;
+    var col = colOf(kind);
+    if (!(file.type === 'application/pdf' || /\.pdf$/i.test(file.name))) return toast('Only PDF files are allowed.');
+    if (file.size > MAX_MB * 1024 * 1024) return toast('File is too large. The maximum is ' + MAX_MB + ' MB.');
+    if (file.size < 8) return toast('That file looks empty.');
+    setBusy(unitId, kind, true);
+    return file.slice(0, 5).arrayBuffer().then(function (buf) {
+      var sig = String.fromCharCode.apply(null, new Uint8Array(buf));
+      if (sig.indexOf('%PDF') !== 0) throw new Error('This file is not a real PDF.');
+      var path = buildPath(u, kind, file.name), old = u[col], patch = {};
+      patch[col] = path;
+      return db.storage.from(bucket).upload(path, file, { contentType: 'application/pdf', cacheControl: '3600', upsert: false }).then(chk).then(function () {
+        return db.from('units').update(patch).eq('id', u.id).then(chk).catch(function (e) {
+          db.storage.from(bucket).remove([path]); throw e;
+        });
+      }).then(function () {
+        return old ? db.storage.from(bucket).remove([old]).catch(function () {}) : null;
+      });
+    }).then(function () {
+      MH.state.dirty = true; return loadAll();
+    }).then(function () {
+      view(); toast('PDF uploaded');
+    }).catch(function (e) {
+      console.error(e); view(); toast(errMsg(e));
+    });
+  }
+
+  function previewFile(unitId, kind) {
+    var u = byId(A.data.units, unitId), path = u && u[colOf(kind)]; if (!path) return;
+    var s = byId(A.data.subjects, u.subject_id);
+    MH.openViewer(MH.fileUrl(path), (s ? s.name + ' · ' : '') + 'Unit ' + u.unit_number + ' · ' + labelOf(kind));
+  }
+
+  function renameFile(unitId, kind) {
+    var u = byId(A.data.units, unitId), col = colOf(kind), old = u && u[col]; if (!old) return;
+    formModal('Rename PDF', [
+      { name: 'name', label: 'New file name', required: true, value: prettyName(old).replace(/\.pdf$/i, ''), maxlength: 60, hint: 'Letters and numbers. .pdf is added for you.' }
+    ], 'Rename', function (v) {
+      var base = slugify(v.name).slice(0, 40);
+      if (!base) return 'Please use letters or numbers.';
+      var dir = old.split('/').slice(0, -1).join('/');
+      var path = dir + '/u' + u.unit_number + '-' + kind + '-' + base + '-' + rand() + '.pdf', patch = {};
+      patch[col] = path;
+      return mutate(function () {
+        return db.storage.from(bucket).move(old, path).then(chk).then(function () {
+          return db.from('units').update(patch).eq('id', u.id).then(chk).catch(function (e) {
+            db.storage.from(bucket).move(path, old); throw e;
+          });
+        });
+      }, 'File renamed');
+    });
+  }
+
+  function removeFile(unitId, kind) {
+    var u = byId(A.data.units, unitId), col = colOf(kind), old = u && u[col]; if (!old) return;
+    confirmBox('Remove the ' + labelOf(kind) + ' PDF from Unit ' + u.unit_number + '? The file will be deleted.', 'Remove').then(function (ok) {
+      if (!ok) return;
+      var patch = {}; patch[col] = null;
+      mutate(function () {
+        return db.storage.from(bucket).remove([old]).then(chk).then(function () {
+          return db.from('units').update(patch).eq('id', u.id).then(chk);
+        });
+      }, 'File removed');
+    });
+  }
+
+  // =====================================================
+  // EVENTS (one set of listeners on the admin root)
+  // =====================================================
+  function bind(el) {
+    if (el._bound) return;
+    el._bound = true;
+    el.addEventListener('click', onClick);
+    el.addEventListener('change', onChange);
+    el.addEventListener('dragover', function (e) {
+      var s = e.target.closest && e.target.closest('.slot'); if (!s) return;
+      e.preventDefault(); s.classList.add('drag');
+    });
+    el.addEventListener('dragleave', function (e) {
+      var s = e.target.closest && e.target.closest('.slot'); if (s) s.classList.remove('drag');
+    });
+    el.addEventListener('drop', function (e) {
+      var s = e.target.closest && e.target.closest('.slot'); if (!s) return;
+      e.preventDefault(); s.classList.remove('drag');
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) handleFile(s.getAttribute('data-unit'), s.getAttribute('data-kind'), f);
+    });
+  }
+
+  function onClick(e) {
+    var t = e.target.closest('[data-a]'); if (!t || t.disabled) return;
+    var a = t.getAttribute('data-a'), id = t.getAttribute('data-id'), type = t.getAttribute('data-type'), kind = t.getAttribute('data-kind');
+    switch (a) {
+      case 'tab': return setTab(t.getAttribute('data-tab'));
+      case 'logout':
+        return db.auth.signOut().then(function () { A.user = null; loginView(); });
+      case 'up': return move(type, id, -1);
+      case 'down': return move(type, id, 1);
+      case 'add': return addItem(type);
+      case 'edit': return editItem(type, id);
+      case 'del': return delItem(type, id);
+      case 'upload':
+        A.pick = { unit: id, kind: kind };
+        var inp = $('#a-file'); if (inp) { inp.value = ''; inp.click(); }
+        return;
+      case 'preview': return previewFile(id, kind);
+      case 'rename': return renameFile(id, kind);
+      case 'rmfile': return removeFile(id, kind);
+      case 'subfilter': A.f.sub = t.getAttribute('data-val'); return view();
+      case 'substatus':
+        return mutate(function () {
+          return db.from('submissions').update({ status: t.getAttribute('data-val') }).eq('id', id).then(chk);
+        }, 'Updated');
+      case 'delsub':
+        return confirmBox('Delete this submission permanently?').then(function (ok) {
+          if (ok) mutate(function () { return db.from('submissions').delete().eq('id', id).then(chk); }, 'Deleted');
+        });
+    }
+  }
+
+  function onChange(e) {
+    var t = e.target;
+    if (t.matches('[data-pub]')) {
+      var type = t.getAttribute('data-pub'), on = t.checked;
+      return mutate(function () {
+        return db.from(type).update({ published: on }).eq('id', t.getAttribute('data-id')).then(chk);
+      }, on ? 'Published' : 'Moved to draft');
+    }
+    if (t.matches('[data-filter]')) {
+      var k = t.getAttribute('data-filter');
+      A.f[k] = t.value;
+      if (k === 'branch' || k === 'sem') A.f.subject = '';
+      return view();
+    }
+    if (t.id === 'a-file' && A.pick && t.files && t.files[0]) {
+      return handleFile(A.pick.unit, A.pick.kind, t.files[0]);
+    }
+  }
+
+  window.MHAdmin = { render: render };
+})();
+
+</script>
+<script>
+/* =====================================================
+   js/app.js — Mentor Harry for Engineering (Stage 1)
+   Public site: routing, data loading, rendering, search,
+   bookmarks, theme, PDF viewer and the Contribute form.
+
+   Routes (all use the # in the address bar):
+     #/                         home
+     #/branches                 home, scrolled to branches
+     #/branch/<slug>/<sem>      branch page (semester tabs)
+     #/subject/<id>/<unit>      subject page (units accordion)
+     #/bookmarks  #/contribute  #/about  #/contact
+   ===================================================== */
+(function () {
+  'use strict';
+
+  var cfg = window.MH_CONFIG || {};
+  var DEFAULT_TITLE = document.title;
+
+  // ---------- tiny helpers ----------
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function safeName(s) { return String(s).replace(/[^\w\- ]+/g, '').replace(/\s+/g, ' ').trim(); }
+
+  var state = { branches: [], subjects: [], units: [], demo: false, client: null, error: null, dirty: false };
+  var home = $('#home-view');
+  var page = $('#page-view');
+
+  // =====================================================
+  // 1. DATA (Supabase, or sample data in demo mode)
+  // =====================================================
+  function isConfigured() {
+    return !!(window.supabase &&
+      /^https:\/\/[a-z0-9-]+\.supabase\.co/i.test(cfg.SUPABASE_URL || '') &&
+      (cfg.SUPABASE_ANON_KEY || '').length > 20 &&
+      cfg.SUPABASE_ANON_KEY.indexOf('PASTE_') === -1);
+  }
+
+  function loadData() {
+    if (!isConfigured()) {
+      state.demo = true;
+      var d = window.MH_SAMPLE;
+      state.branches = d.branches; state.subjects = d.subjects; state.units = d.units;
+      $('#demo-banner').hidden = false;
+      return Promise.resolve();
+    }
+    if (!state.client) state.client = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+    // The public site only ever asks for published rows (RLS enforces this too).
+    return Promise.all([
+      state.client.from('branches').select('*').eq('published', true).order('position'),
+      state.client.from('subjects').select('*').eq('published', true).order('position'),
+      state.client.from('units').select('*').eq('published', true).order('unit_number')
+    ]).then(function (r) {
+      var err = r[0].error || r[1].error || r[2].error;
+      if (err) throw err;
+      state.branches = r[0].data; state.subjects = r[1].data; state.units = r[2].data;
+    });
+  }
+
+  var ready;
+  function boot() {
+    state.error = null;
+    ready = loadData().catch(function (e) {
+      console.error('Could not load data:', e);
+      state.error = e;
+    }).then(function () {
+      if (state.error) {
+        $('#branch-slider').innerHTML = '<div class="glass empty" style="flex:1">Could not load branches. Please refresh.</div>';
+        return;
+      }
+      renderBranches(); buildIndex(); window.MHAnim.refresh();
+    });
+    return ready;
+  }
+
+  function fileUrl(path, downloadName) {
+    if (!path || !state.client) return null;
+    var opts = downloadName ? { download: downloadName } : undefined;
+    return state.client.storage.from(cfg.BUCKET || 'notes').getPublicUrl(path, opts).data.publicUrl;
+  }
+
+  function branchById(id) { return state.branches.find(function (b) { return b.id === id; }); }
+  function subjectById(id) { return state.subjects.find(function (s) { return s.id === id; }); }
+  function unitsOf(subjectId) {
+    return state.units.filter(function (u) { return u.subject_id === subjectId; })
+      .sort(function (a, b) { return a.unit_number - b.unit_number; });
+  }
+
+  // =====================================================
+  // 2. THEME, MENU, TOAST
+  // =====================================================
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = $('#theme-toggle');
+    btn.setAttribute('aria-pressed', String(t === 'light'));
+    btn.setAttribute('aria-label', t === 'light' ? 'Switch to dark mode' : 'Switch to light mode');
+    $('#theme-icon').textContent = t === 'light' ? '☾' : '☀';
+    $('meta[name="theme-color"]').setAttribute('content', t === 'light' ? '#F5F6FC' : '#0B1026');
+  }
+  applyTheme(document.documentElement.getAttribute('data-theme') || 'dark');
+  $('#theme-toggle').addEventListener('click', function () {
+    var next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+    try { localStorage.setItem('mh_theme', next); } catch (e) {}
+  });
+
+  function closeMenu() {
+    $('#nav-links').classList.remove('open');
+    $('#menu-btn').setAttribute('aria-expanded', 'false');
+  }
+  $('#menu-btn').addEventListener('click', function () {
+    var open = $('#nav-links').classList.toggle('open');
+    this.setAttribute('aria-expanded', String(open));
+  });
+
+  var toastTimer;
+  function toast(msg) {
+    var t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 3500);
+  }
+
+  $('#year').textContent = new Date().getFullYear();
+
+  // =====================================================
+  // 3. BOOKMARKS (saved in this browser only)
+  // =====================================================
+  var BM_KEY = 'mh_bookmarks';
+  function getBM() { try { return JSON.parse(localStorage.getItem(BM_KEY)) || []; } catch (e) { return []; } }
+  function setBM(a) { try { localStorage.setItem(BM_KEY, JSON.stringify(a)); } catch (e) {} }
+  function isBM(id) { return getBM().indexOf(id) > -1; }
+  function toggleBM(id) {
+    var a = getBM(), i = a.indexOf(id);
+    if (i > -1) a.splice(i, 1); else a.push(id);
+    setBM(a); updateBMCount();
+    return i === -1;
+  }
+  function updateBMCount() {
+    var n = getBM().length, el = $('#bm-count');
+    el.textContent = n; el.hidden = n === 0;
+  }
+  updateBMCount();
+
+  // =====================================================
+  // 4. VIEW SWITCHING
+  // =====================================================
+  function setActiveNav(name) {
+    $$('.nav-link[data-route]').forEach(function (a) {
+      a.classList.toggle('active', a.getAttribute('data-route') === name);
+    });
+  }
+
+  function showHome(scrollToBranches) {
+    page.hidden = true; page.innerHTML = '';
+    home.hidden = false;
+    document.title = DEFAULT_TITLE;
+    setActiveNav('');
+    requestAnimationFrame(function () {
+      window.MHAnim.refresh();
+      if (scrollToBranches) window.MHAnim.scrollTo('#branches'); else window.MHAnim.toTop();
+    });
+  }
+
+  function mountPage(html, title, navName) {
+    home.hidden = true; page.hidden = false;
+    page.innerHTML = html;
+    document.title = title + ' | Mentor Harry for Engineering';
+    setActiveNav(navName || '');
+    window.MHAnim.toTop();
+    window.MHAnim.pageIn(page);
+  }
+
+  function skeletonPage() {
+    mountPage('<section class="page"><div class="container">' +
+      '<div class="skeleton" style="height:40px;width:50%;border-radius:12px"></div>' +
+      '<div class="grid" style="margin-top:36px">' +
+      '<div class="glass skeleton" style="height:170px"></div>' +
+      '<div class="glass skeleton" style="height:170px"></div>' +
+      '<div class="glass skeleton" style="height:170px"></div></div></div></section>', 'Loading');
+  }
+
+  function errorPage() {
+    mountPage('<section class="page"><div class="container"><div class="glass empty"><b>Could not load notes</b>' +
+      'Please check your internet connection and refresh. If you are the owner, check your Supabase URL and key in <code>js/config.js</code> ' +
+      'and that you ran <code>supabase/schema.sql</code>.</div></div></section>', 'Error');
+  }
+
+  function notFoundPage() {
+    mountPage('<section class="page"><div class="container"><div class="glass empty"><b>Page not found</b>' +
+      'That page does not exist. <a href="#/" style="color:var(--cyan)">Go back home</a>.</div></div></section>', 'Not found');
+  }
+
+  // =====================================================
+  // 5. HOME: branch slider + search
+  // =====================================================
+  function renderBranches() {
+    var el = $('#branch-slider');
+    var live = state.branches.map(function (b) {
+      var n = state.subjects.filter(function (s) { return s.branch_id === b.id; }).length;
+      return '<a class="branch-card glass" href="#/branch/' + encodeURIComponent(b.slug) + '">' +
+        '<span class="branch-icon" aria-hidden="true">' + esc(b.icon || '🎓') + '</span>' +
+        '<h3>' + esc(b.name) + '</h3><p>' + esc(b.full_name || b.description || '') + '</p>' +
+        '<span class="branch-meta">' + n + ' subject' + (n === 1 ? '' : 's') + ' →</span></a>';
+    });
+    var soon = (cfg.COMING_SOON || []).filter(function (b) {
+      return !state.branches.some(function (x) { return String(x.name).toLowerCase() === String(b.name).toLowerCase(); });
+    }).map(function (b) {
+      return '<div class="branch-card glass is-soon">' +
+        '<span class="branch-icon" aria-hidden="true">' + esc(b.icon || '🎓') + '</span>' +
+        '<h3>' + esc(b.name) + '</h3><p>Notes are on the way.</p>' +
+        '<span class="branch-meta">Coming soon</span></div>';
+    });
+    el.innerHTML = live.concat(soon).join('');
+  }
+
+  $('#slide-prev').addEventListener('click', function () { $('#branch-slider').scrollBy({ left: -290, behavior: 'smooth' }); });
+  $('#slide-next').addEventListener('click', function () { $('#branch-slider').scrollBy({ left: 290, behavior: 'smooth' }); });
+
+  // Search across subjects and units
+  var searchIndex = [];
+  function buildIndex() {
+    searchIndex = [];
+    state.subjects.forEach(function (s) {
+      var b = branchById(s.branch_id);
+      searchIndex.push({
+        text: (s.name + ' ' + (s.code || '')).toLowerCase(),
+        title: s.name,
+        sub: 'Subject · ' + (b ? b.name : '') + ' · Semester ' + s.semester,
+        href: '#/subject/' + encodeURIComponent(s.id)
+      });
+    });
+    state.units.forEach(function (u) {
+      var s = subjectById(u.subject_id); if (!s) return;
+      var b = branchById(s.branch_id);
+      searchIndex.push({
+        text: (u.title + ' ' + (u.description || '') + ' ' + s.name).toLowerCase(),
+        title: 'Unit ' + u.unit_number + ': ' + u.title,
+        sub: s.name + ' · ' + (b ? b.name : '') + ' · Semester ' + s.semester,
+        href: '#/subject/' + encodeURIComponent(s.id) + '/' + u.unit_number
+      });
+    });
+  }
+
+  function runSearch() {
+    var box = $('#search-results');
+    var q = $('#search-input').value.trim().toLowerCase();
+    if (q.length < 2) { box.hidden = true; box.innerHTML = ''; return; }
+    var hits = searchIndex.filter(function (i) { return i.text.indexOf(q) > -1; }).slice(0, 8);
+    box.innerHTML = hits.length
+      ? hits.map(function (h) { return '<a href="' + h.href + '"><b>' + esc(h.title) + '</b><small>' + esc(h.sub) + '</small></a>'; }).join('')
+      : '<div class="none">No match yet. Try another word, or check back soon.</div>';
+    box.hidden = false;
+  }
+  var searchTimer;
+  $('#search-input').addEventListener('input', function () {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () { ready.then(runSearch); }, 150);
+  });
+  $('#search-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    ready.then(function () {
+      runSearch();
+      var first = $('#search-results a');
+      if (first) location.hash = first.getAttribute('href');
+    });
+  });
+  $('#search-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { $('#search-results').hidden = true; }
+  });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('#search-form')) $('#search-results').hidden = true;
+  });
+  $('#search-results').addEventListener('click', function () {
+    $('#search-results').hidden = true; $('#search-input').value = '';
+  });
+
+  // =====================================================
+  // 6. BRANCH PAGE
+  // =====================================================
+  function branchPage(slug, semParam) {
+    var b = state.branches.find(function (x) { return x.slug === slug; });
+    if (!b) return notFoundPage();
+    var subs = state.subjects.filter(function (s) { return s.branch_id === b.id; });
+    var sem = parseInt(semParam, 10);
+    if (!(sem >= 1 && sem <= 8)) {
+      var sems = subs.map(function (s) { return s.semester; }).sort(function (a, c) { return a - c; });
+      sem = sems[0] || 1;
+    }
+
+    var tabs = '';
+    for (var i = 1; i <= 8; i++) {
+      tabs += '<button class="tab" role="tab" type="button" id="tab-' + i + '" data-sem="' + i + '" ' +
+        'aria-selected="' + (i === sem) + '" aria-controls="sem-panel" tabindex="' + (i === sem ? 0 : -1) + '">Sem ' + i + '</button>';
+    }
+
+    mountPage(
+      '<section class="page"><div class="container">' +
+      '<nav class="crumbs" aria-label="Breadcrumb"><a href="#/">Home</a> <span>/</span> <span>' + esc(b.name) + '</span></nav>' +
+      '<div class="page-head"><span class="branch-icon" aria-hidden="true">' + esc(b.icon || '🎓') + '</span>' +
+      '<div><h1>' + esc(b.full_name || b.name) + '</h1>' +
+      (b.description ? '<p class="page-sub">' + esc(b.description) + '</p>' : '') + '</div></div>' +
+      '<div class="tabs" role="tablist" aria-label="Semesters">' + tabs + '</div>' +
+      '<div id="sem-panel" role="tabpanel" tabindex="0"></div>' +
+      '</div></section>',
+      b.name + ' Notes', ''
+    );
+
+    function renderPanel(n) {
+      var list = subs.filter(function (s) { return s.semester === n; });
+      var panel = $('#sem-panel');
+      panel.setAttribute('aria-labelledby', 'tab-' + n);
+      if (!list.length) {
+        panel.innerHTML = '<div class="glass empty"><b>Semester ' + n + ' notes are coming soon</b>We are adding subjects regularly. Check back soon.</div>';
+        return;
+      }
+      panel.innerHTML = '<div class="grid">' + list.map(function (s) {
+        var count = unitsOf(s.id).length;
+        return '<a class="subject-card glass" href="#/subject/' + encodeURIComponent(s.id) + '">' +
+          (s.code ? '<span class="code">' + esc(s.code) + '</span>' : '') +
+          '<h3>' + esc(s.name) + '</h3><p>' + esc(s.description || '') + '</p>' +
+          '<span class="meta">' + count + ' unit' + (count === 1 ? '' : 's') + ' →</span></a>';
+      }).join('') + '</div>';
+    }
+    renderPanel(sem);
+
+    var tablist = $('.tabs', page);
+    function selectTab(btn) {
+      var n = parseInt(btn.getAttribute('data-sem'), 10);
+      $$('.tab', tablist).forEach(function (t) {
+        var on = t === btn;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+      });
+      renderPanel(n);
+      history.replaceState(null, '', '#/branch/' + encodeURIComponent(b.slug) + '/' + n);
+    }
+    tablist.addEventListener('click', function (e) {
+      var t = e.target.closest('.tab'); if (t) selectTab(t);
+    });
+    tablist.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      var all = $$('.tab', tablist);
+      var idx = all.indexOf(document.activeElement); if (idx < 0) return;
+      var nxt = all[(idx + (e.key === 'ArrowRight' ? 1 : all.length - 1)) % all.length];
+      nxt.focus(); selectTab(nxt);
+    });
+  }
+
+  // =====================================================
+  // 7. SUBJECT PAGE (units accordion)
+  // =====================================================
+  var DOCS = [
+    { key: 'notes_path', label: 'Notes', primary: true },
+    { key: 'iq_path', label: 'Important Questions' },
+    { key: 'pyq_path', label: 'PYQ' }
+  ];
+
+  function docButtons(unit, subject) {
+    return DOCS.map(function (d) {
+      var view = fileUrl(unit[d.key]);
+      if (!view) return d.primary ? '<span class="chip chip-soon">Notes coming soon</span>' : '';
+      var title = subject.name + ' · Unit ' + unit.unit_number + ' · ' + d.label;
+      var dl = fileUrl(unit[d.key], safeName(subject.name + ' Unit ' + unit.unit_number + ' ' + d.label) + '.pdf');
+      return '<div class="doc' + (d.primary ? ' doc-primary' : '') + '">' +
+        '<span class="doc-label">' + d.label + '</span>' +
+        '<button class="btn btn-sm" type="button" data-view="' + esc(view) + '" data-title="' + esc(title) + '">View</button>' +
+        '<a class="btn btn-sm btn-ghost" href="' + esc(dl) + '" download>Download</a></div>';
+    }).join('');
+  }
+
+  function unitHtml(u, subject, open) {
+    var on = isBM(u.id);
+    return '<article class="unit glass' + (open ? ' open' : '') + '">' +
+      '<div class="unit-row">' +
+      '<button class="unit-toggle" type="button" aria-expanded="' + open + '" aria-controls="ub-' + esc(u.id) + '">' +
+      '<span class="unit-num" aria-hidden="true">' + u.unit_number + '</span>' +
+      '<span class="unit-title"><span class="sr-only">Unit ' + u.unit_number + ': </span>' + esc(u.title) + '</span>' +
+      '<span class="unit-caret" aria-hidden="true">▾</span></button>' +
+      '<button class="bm-btn" type="button" data-bm="' + esc(u.id) + '" aria-pressed="' + on + '" ' +
+      'aria-label="' + (on ? 'Remove bookmark' : 'Bookmark') + ' Unit ' + u.unit_number + '">' + (on ? '★' : '☆') + '</button>' +
+      '</div>' +
+      '<div class="unit-body" id="ub-' + esc(u.id) + '"><div class="unit-body-inner"><div class="unit-content">' +
+      (u.description ? '<p>' + esc(u.description) + '</p>' : '') +
+      '<div class="docs">' + docButtons(u, subject) + '</div>' +
+      '</div></div></div></article>';
+  }
+
+  function subjectPage(id, unitParam) {
+    var s = subjectById(id);
+    if (!s) return notFoundPage();
+    var b = branchById(s.branch_id);
+    var units = unitsOf(s.id);
+    var openNum = parseInt(unitParam, 10) || (units[0] && units[0].unit_number);
+
+    mountPage(
+      '<section class="page"><div class="container">' +
+      '<nav class="crumbs" aria-label="Breadcrumb"><a href="#/">Home</a> <span>/</span> ' +
+      (b ? '<a href="#/branch/' + encodeURIComponent(b.slug) + '/' + s.semester + '">' + esc(b.name) + ' · Sem ' + s.semester + '</a> <span>/</span> ' : '') +
+      '<span>' + esc(s.name) + '</span></nav>' +
+      '<div class="page-head"><div>' + (s.code ? '<span class="code">' + esc(s.code) + '</span>' : '') +
+      '<h1>' + esc(s.name) + '</h1>' +
+      (s.description ? '<p class="page-sub">' + esc(s.description) + '</p>' : '') + '</div></div>' +
+      (units.length
+        ? '<div class="units">' + units.map(function (u) { return unitHtml(u, s, u.unit_number === openNum); }).join('') + '</div>'
+        : '<div class="glass empty"><b>Units coming soon</b>Notes for this subject are being prepared.</div>') +
+      '</div></section>',
+      s.name + ' Notes', ''
+    );
+
+    if (unitParam) {
+      var opened = $('.unit.open', page);
+      if (opened) setTimeout(function () { window.MHAnim.scrollTo('.unit.open'); }, 450);
+    }
+  }
+
+  // =====================================================
+  // 8. BOOKMARKS PAGE
+  // =====================================================
+  function bookmarksPage() {
+    mountPage('<section class="page"><div class="container">' +
+      '<h1>Your bookmarks</h1><p class="page-sub">Saved on this device only. Clearing your browser data removes them.</p>' +
+      '<div id="bm-list" class="units" style="margin-top:32px"></div></div></section>', 'Bookmarks', 'bookmarks');
+    renderBookmarkList();
+  }
+
+  function renderBookmarkList() {
+    var el = $('#bm-list'); if (!el) return;
+    var ids = getBM();
+    var items = ids.map(function (id) { return state.units.find(function (u) { return u.id === id; }); }).filter(Boolean);
+    if (!items.length) {
+      el.innerHTML = '<div class="glass empty"><b>No bookmarks yet</b>Tap the ☆ next to any unit to save it here.</div>';
+      return;
+    }
+    el.innerHTML = items.map(function (u) {
+      var s = subjectById(u.subject_id), b = s && branchById(s.branch_id);
+      return '<div class="bm-item glass"><div class="grow"><h3>Unit ' + u.unit_number + ': ' + esc(u.title) + '</h3>' +
+        '<small>' + esc(s ? s.name : '') + (b ? ' · ' + esc(b.name) + ' · Sem ' + s.semester : '') + '</small></div>' +
+        '<a class="btn btn-sm btn-ghost" href="#/subject/' + encodeURIComponent(u.subject_id) + '/' + u.unit_number + '">Open →</a>' +
+        '<button class="bm-btn" type="button" data-bm="' + esc(u.id) + '" aria-pressed="true" aria-label="Remove bookmark" style="margin-right:0">★</button></div>';
+    }).join('');
+  }
+
+  // =====================================================
+  // 9. CONTRIBUTE, ABOUT, CONTACT
+  // =====================================================
+  function contributePage() {
+    mountPage('<section class="page"><div class="container">' +
+      '<div class="section-label">SHARE YOUR NOTES</div><h1>Contribute notes</h1>' +
+      '<p class="page-sub">Have good handwritten or typed notes? Share a link (Google Drive, etc.) and we will review it before publishing. Please share only your own work.</p>' +
+      '<form class="form glass" id="contribute-form" style="margin-top:32px" novalidate>' +
+      '<div class="row"><div class="field"><label for="c-name">Your name *</label><input id="c-name" name="name" maxlength="100" required autocomplete="name"></div>' +
+      '<div class="field"><label for="c-email">Email (optional)</label><input id="c-email" name="email" type="email" maxlength="200" autocomplete="email"></div></div>' +
+      '<div class="row"><div class="field"><label for="c-branch">Branch</label><input id="c-branch" name="branch" maxlength="100" placeholder="e.g. CSE"></div>' +
+      '<div class="field"><label for="c-subject">Subject</label><input id="c-subject" name="subject" maxlength="150" placeholder="e.g. Data Structures"></div></div>' +
+      '<div class="field"><label for="c-unit">Unit</label><input id="c-unit" name="unit" maxlength="150" placeholder="e.g. Unit 3: Linked Lists"></div>' +
+      '<div class="field"><label for="c-link">Link to your notes (Google Drive, etc.) *</label><input id="c-link" name="link" type="url" maxlength="500" placeholder="https://" required></div>' +
+      '<div class="field"><label for="c-msg">Message (optional)</label><textarea id="c-msg" name="message" maxlength="2000"></textarea></div>' +
+      '<div class="hp" aria-hidden="true"><label>Leave empty <input name="website" tabindex="-1" autocomplete="off"></label></div>' +
+      '<button class="btn" type="submit" id="c-submit">Send for review</button>' +
+      '<p class="form-note">Submissions are reviewed by the site owner. Your email is never shown publicly.</p>' +
+      '</form></div></section>', 'Contribute notes', 'contribute');
+
+    $('#contribute-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var f = new FormData(this);
+      if (f.get('website')) return; // bot trap
+      function v(k) { var x = String(f.get(k) || '').trim(); return x || null; }
+      var row = { name: v('name'), email: v('email'), branch: v('branch'), subject: v('subject'), unit: v('unit'), link: v('link'), message: v('message') };
+      if (!row.name) return toast('Please enter your name.');
+      if (!row.link || !/^https?:\/\//i.test(row.link)) return toast('Please add a valid link starting with http:// or https://');
+      if (row.email && !/^\S+@\S+\.\S+$/.test(row.email)) return toast('That email does not look right.');
+
+      try {
+        var last = parseInt(localStorage.getItem('mh_last_submit') || '0', 10);
+        if (Date.now() - last < 30000) return toast('Please wait a few seconds before sending again.');
+      } catch (err) {}
+
+      if (state.demo) return toast('Demo mode: Supabase is not connected, so nothing was saved.');
+
+      var btn = $('#c-submit'); btn.disabled = true;
+      state.client.from('submissions').insert(row).then(function (res) {
+        btn.disabled = false;
+        if (res.error) { console.error(res.error); return toast('Sorry, could not send. Please try again.'); }
+        try { localStorage.setItem('mh_last_submit', String(Date.now())); } catch (err) {}
+        $('#contribute-form').reset();
+        toast('Thank you! Your notes were sent for review.');
+      });
+    });
+  }
+
+  function aboutPage() {
+    mountPage('<section class="page"><div class="container prose">' +
+      '<div class="section-label">ABOUT</div><h1>About Mentor Harry</h1>' +
+      '<p>Mentor Harry for Engineering is a free notes hub for engineering students. Notes are organised the way you actually study: branch, semester, subject, then unit.</p>' +
+      '<h2>Why it exists</h2><p>Good notes are scattered across chats, drives and photos. This site puts them in one clean place so you can find the exact unit you need, read it in your browser, or download it.</p>' +
+      '<h2>Who builds it</h2><p>Built and maintained by ' + esc(cfg.OWNER_NAME || 'the site owner') + ', a Computer Science student. Have a correction or want to help? Use the <a href="#/contribute" style="color:var(--cyan)">Contribute</a> page.</p>' +
+      '</div></section>', 'About', 'about');
+  }
+
+  function contactPage() {
+    var mail = esc(cfg.CONTACT_EMAIL || '');
+    mountPage('<section class="page"><div class="container">' +
+      '<div class="section-label">CONTACT</div><h1>Get in touch</h1>' +
+      '<p class="page-sub">Found a mistake in the notes, or want to suggest a subject? Write to us.</p>' +
+      '<div class="contact-list"><a class="glass" href="mailto:' + mail + '"><b>Email</b><br><span style="color:var(--muted)">' + mail + '</span></a>' +
+      '<a class="glass" href="#/contribute"><b>Contribute notes</b><br><span style="color:var(--muted)">Share your notes for review</span></a></div>' +
+      '</div></section>', 'Contact', 'contact');
+  }
+
+  // =====================================================
+  // 10. PDF VIEWER (modal)
+  // =====================================================
+  var lastFocus = null;
+  function openViewer(url, title) {
+    lastFocus = document.activeElement;
+    $('#viewer-title').textContent = title || 'Document';
+    $('#viewer-open').setAttribute('href', url);
+    $('#viewer-frame').setAttribute('src', url + '#view=FitH');
+    $('#viewer').hidden = false;
+    window.MHAnim.lock(true);
+    $('#viewer-close').focus();
+  }
+  function closeViewer() {
+    if ($('#viewer').hidden) return;
+    $('#viewer').hidden = true;
+    $('#viewer-frame').setAttribute('src', 'about:blank');
+    window.MHAnim.lock(false);
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  $('#viewer-close').addEventListener('click', closeViewer);
+  $('#viewer').addEventListener('click', function (e) { if (e.target === this) closeViewer(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeViewer();
+    // keep keyboard focus inside the open viewer
+    if (e.key === 'Tab' && !$('#viewer').hidden) {
+      var f = $$('#viewer a, #viewer button');
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+
+  // =====================================================
+  // 11. GLOBAL CLICK HANDLING
+  // =====================================================
+  document.addEventListener('click', function (e) {
+    // View a PDF
+    var v = e.target.closest('[data-view]');
+    if (v) { openViewer(v.getAttribute('data-view'), v.getAttribute('data-title')); return; }
+
+    // Accordion
+    var tg = e.target.closest('.unit-toggle');
+    if (tg) {
+      var unit = tg.closest('.unit');
+      var open = unit.classList.toggle('open');
+      tg.setAttribute('aria-expanded', String(open));
+      return;
+    }
+
+    // Bookmark star
+    var bm = e.target.closest('[data-bm]');
+    if (bm) {
+      var on = toggleBM(bm.getAttribute('data-bm'));
+      bm.setAttribute('aria-pressed', String(on));
+      bm.textContent = on ? '★' : '☆';
+      toast(on ? 'Bookmarked' : 'Bookmark removed');
+      if ($('#bm-list')) renderBookmarkList();
+      return;
+    }
+
+    // Smooth scroll links that point to a section on the home page
+    var sc = e.target.closest('[data-scroll-to]');
+    if (sc && !home.hidden) {
+      e.preventDefault();
+      window.MHAnim.scrollTo(sc.getAttribute('data-scroll-to'));
+      closeMenu();
+      return;
+    }
+
+    if (e.target.closest('.nav-link')) closeMenu();
+  });
+
+  // =====================================================
+  // 12. ROUTER
+  // =====================================================
+  function route() {
+    closeViewer(); closeMenu();
+    var p = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
+    var a = p[0], b = p[1], c = p[2];
+
+    // Admin changed something: reload what the public pages show
+    if (state.dirty && a !== 'admin') { state.dirty = false; boot(); }
+
+    if (!a) return showHome(false);
+    if (a === 'branches') return showHome(true);
+    if (a === 'admin') return window.MHAdmin ? window.MHAdmin.render(p.slice(1)) : notFoundPage();
+
+    // Pages that do not need data
+    if (a === 'about') return aboutPage();
+    if (a === 'contact') return contactPage();
+    if (a === 'contribute') return contributePage();
+
+    // Pages that need data
+    skeletonPage();
+    ready.then(function () {
+      if (state.error) return errorPage();
+      if (a === 'branch' && b) return branchPage(b, c);
+      if (a === 'subject' && b) return subjectPage(b, c);
+      if (a === 'bookmarks') return bookmarksPage();
+      notFoundPage();
+    });
+  }
+
+  window.addEventListener('hashchange', route);
+
+  // Things the admin portal (js/admin.js) needs from this file
+  window.MH = {
+    cfg: cfg, state: state, esc: esc, toast: toast, mountPage: mountPage,
+    fileUrl: fileUrl, openViewer: openViewer
+  };
+
+  // Start: load data (fills the home page when it arrives), then route
+  boot();
+  route();
+})();
+
+</script>
+</body>
+</html>
