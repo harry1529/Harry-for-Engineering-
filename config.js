@@ -17,14 +17,14 @@
    reading published notes.
    ===================================================== */
 window.MH_CONFIG = {
-  SUPABASE_URL: 'PASTE_YOUR_SUPABASE_URL_HERE',        // e.g. https://abcdxyz.supabase.co
-  SUPABASE_ANON_KEY: 'PASTE_YOUR_PUBLIC_ANON_KEY_HERE', // the long public key
+  SUPABASE_URL: 'https://tsuyxkzadddwwzjaxuyp.supabase.co',        // e.g. https://abcdxyz.supabase.co
+  SUPABASE_ANON_KEY: 'sb_publishable_HBLZVPhnxuCzofgjAL4hSg_TSqotIuE', // the long public key
 
   BUCKET: 'notes',                       // storage bucket name (do not change)
 
   // Used on the About and Contact pages. Change to your real details.
   OWNER_NAME: 'Harshit Kumrawat',
-  CONTACT_EMAIL: 'your-email@example.com',
+  CONTACT_EMAIL: 'harshitcool556@gmail.com',
 
   // Branches shown as "Coming soon" cards in the slider.
   // Delete this list once all your real branches are added.
